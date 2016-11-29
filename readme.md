@@ -18,6 +18,8 @@ It is really fast in execution.
 
 Have a try:
 
+Either install this maven project in your local maven repository and use
+
 ```  
 <dependency>
    <groupId>com.iksgmbh</groupId>
@@ -25,6 +27,20 @@ Have a try:
    <version>0.0.1-SNAPSHOT</version>
 </dependency>
 ```
+
+Or add the already build db-jar in your local lib directory of your workspace project and use
+
+```  
+<dependency>
+   <groupId>com.iksgmbh</groupId>
+   <artifactId>sql-pojo-memo-db</artifactId>
+   <version>0.0.1-SNAPSHOT</version>
+   <type>jar</type>
+   <scope>system</scope>
+   <systemPath>${project.basedir}/lib/sql-pojo-memo-db-0.0.1.jar</systemPath>
+</dependency>
+```  
+
 
 * * *
 
