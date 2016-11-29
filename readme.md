@@ -28,7 +28,7 @@ Either install this maven project in your local maven repository and use
 </dependency>
 ```
 
-Or add the already build db-jar in your local lib directory of your workspace project and use
+Or add the already built db-jar in your local lib directory of your workspace project and use
 
 ```  
 <dependency>
