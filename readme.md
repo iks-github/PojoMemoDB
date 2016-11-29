@@ -1,4 +1,18 @@
-#The MOGLi Code Creator   
+#The SQL Pojo Memory Database   
+
+* * *
+
+Have you ever felt the need to mock a database in you Unit tests? Have you ever set up a memory db without cursing? Have you ever run into problems with maven and its repositories for resolving all the required dependencies?
+
+The little jar here is a fake db implemented to be used most easily in unit tests that contain database accesses.
+
+It's based only on plain Java and only needs joda-time, commons-lang3 and commons-collection to compile and run.
+
+Only one short command to have a connection instance.
+
+Supports a number of the most basic SQL operation you need (create, update, delete and select).
+
+It is really fast in execution.
 
 * * *
 
@@ -13,6 +27,7 @@ With a one short command, you get an Connection to the database.
 It supports a number of the most basic SQL operation you need (create, update, delete and select).
 
 It is quick in execution.
+>>>>>>> branch 'master' of https://github.com/iks-github/SqlPojoMemoDB.git
 
 
 Have a try:
