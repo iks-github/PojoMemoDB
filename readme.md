@@ -17,13 +17,14 @@ It is really fast in execution.
 * * *
 
 Have a try:
-  
- <dependency>
-    <groupId>com.iksgmbh</groupId>
-    <artifactId>sql-pojo-memo-db</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
- </dependency>
 
+```  
+<dependency>
+   <groupId>com.iksgmbh</groupId>
+   <artifactId>sql-pojo-memo-db</artifactId>
+   <version>0.0.1-SNAPSHOT</version>
+</dependency>
+```
 
 * * *
 
