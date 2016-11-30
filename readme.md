@@ -24,7 +24,7 @@ Either install this maven project in your local maven repository and use
 <dependency>
    <groupId>com.iksgmbh</groupId>
    <artifactId>sql-pojo-memo-db</artifactId>
-   <version>0.0.1-SNAPSHOT</version>
+   <version>0.0.2</version>
 </dependency>
 ```
 
@@ -34,7 +34,7 @@ Or add the already built db-jar in your local lib directory of your workspace pr
 <dependency>
    <groupId>com.iksgmbh</groupId>
    <artifactId>sql-pojo-memo-db</artifactId>
-   <version>0.0.1-SNAPSHOT</version>
+   <version>0.0.2</version>
    <type>jar</type>
    <scope>system</scope>
    <systemPath>${project.basedir}/lib/sql-pojo-memo-db-0.0.1.jar</systemPath>
@@ -48,7 +48,7 @@ Copyright by [IKS GmbH](https://www.iks-gmbh.com)
 
 Licenced under [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0.html)
 
-Current version: **0.0.1**
+Current version: **0.0.2**
 
 * * *
 
