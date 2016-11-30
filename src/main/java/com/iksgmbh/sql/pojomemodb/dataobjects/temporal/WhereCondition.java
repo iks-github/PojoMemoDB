@@ -1,11 +1,26 @@
+/*
+ * Copyright 2016 IKS Gesellschaft fuer Informations- und Kommunikationssysteme mbH
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.iksgmbh.sql.pojomemodb.dataobjects.temporal;
 
 import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.COMPARATOR_EQUAL;
 import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.COMPARATOR_IS_NULL;
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.COMPARATOR_LARGER;
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.COMPARATOR_LARGER_EQUAL;
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.COMPARATOR_LOWER;
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.COMPARATOR_LOWER_EQUAL;
+import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.COMPARATOR_GREATER;
+import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.COMPARATOR_GREATER_EQUAL;
+import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.COMPARATOR_LESS;
+import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.COMPARATOR_LESS_EQUAL;
 import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.COMPARATOR_NOT_NULL;
 import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.COMPARATOR_UNEQUAL;
 
@@ -18,8 +33,8 @@ import java.sql.SQLException;
  */
 public class WhereCondition 
 {	
-	public static String[] COMPARATORS = { COMPARATOR_EQUAL, COMPARATOR_UNEQUAL, COMPARATOR_LARGER, COMPARATOR_LOWER, 
-                                           COMPARATOR_LARGER_EQUAL, COMPARATOR_LOWER_EQUAL,
+	public static String[] COMPARATORS = { COMPARATOR_EQUAL, COMPARATOR_UNEQUAL, COMPARATOR_GREATER, COMPARATOR_LESS, 
+                                           COMPARATOR_GREATER_EQUAL, COMPARATOR_LESS_EQUAL,
                                            COMPARATOR_IS_NULL, COMPARATOR_NOT_NULL};
 	
 	public static String[] NULL_COMPARATORS = { COMPARATOR_IS_NULL, COMPARATOR_NOT_NULL};

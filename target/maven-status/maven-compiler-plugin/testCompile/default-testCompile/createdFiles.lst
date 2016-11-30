@@ -1,0 +1,15 @@
+com\iksgmbh\sql\pojomemodb\connection\SqlPojoPreparedStatementTest.class
+com\iksgmbh\sql\pojomemodb\sqlparser\SqlPojoSelectParserTest.class
+com\iksgmbh\sql\pojomemodb\SqlPojoMemoDBTest.class
+com\iksgmbh\sql\pojomemodb\sqlparser\SqlPojoInsertIntoParserTest.class
+com\iksgmbh\sql\pojomemodb\dataobjects\persistent\TableTest.class
+com\iksgmbh\sql\pojomemodb\connection\SqlPojoConnectionTest.class
+com\iksgmbh\sql\pojomemodb\sqlparser\SqlPojoUpdateParserTest.class
+com\iksgmbh\sql\pojomemodb\connection\SqlPojoResultSetTest.class
+com\iksgmbh\sql\pojomemodb\sqlparser\SqlPojoCreateSequenceParserTest.class
+com\iksgmbh\sql\pojomemodb\sqlparser\SqlPojoCreateTableParserTest.class
+com\iksgmbh\sql\pojomemodb\SqlExecutorTest.class
+com\iksgmbh\sql\pojomemodb\testutils\SqlStatementLoader.class
+com\iksgmbh\sql\pojomemodb\utils\StringParseUtilTest.class
+com\iksgmbh\sql\pojomemodb\sqlparser\SqlPojoDeleteParserTest.class
+com\iksgmbh\sql\pojomemodb\dataobjects\persistent\ColumnTest.class

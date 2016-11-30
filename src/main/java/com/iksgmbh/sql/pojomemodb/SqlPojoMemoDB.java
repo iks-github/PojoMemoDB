@@ -1,3 +1,18 @@
+/*
+ * Copyright 2016 IKS Gesellschaft fuer Informations- und Kommunikationssysteme mbH
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.iksgmbh.sql.pojomemodb;
 
 import java.sql.Connection;
@@ -15,43 +30,10 @@ import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.TableStore;
  * This class represents the main class of an incomplete but lightweight implementation of a SQL database,
  * that stores its whole data only in memory. It is lightweight because its a pure Java implementation
  * that does not depend on any framework.
- * Although incomplete, many of the most basic functionalities are supported.
+ * Although incomplete, many of the most basic functionalities are supported 
+ * (details see https://github.com/iks-github/SqlPojoMemoDB/wiki).
  * Therefore it can be used to replace a heavyweight sql database such as Oracle for Unit testing.
  * 
- * Supported features are:
- * - creating and deleting tables,
- * - inserting, updating, deleting rows of data in a table
- * - selecting a subset of columns from a table
- * - validating for type safety (data values are only accepted if they match their column type) for 
- *   following supported column types: 
- *     NUMBER    e.g. NUMBER(10,2), NUMBER(1) or NUMBER  
- *     VARCHAR2  e.g. VARCHAR2(50) or VARCHAR2(50 CHARS)  
- *     DATE
- * - selecting a subset of data rows from a table by where clauses (only AND operator)
- *   using supported comparator types:  =,   <>,  IS NULL,  IS NOT NUL
- * - nullable check
- * - PreparedStatement and ResultSet for the following supported Java types:
- *   String, int, long 
- * - SQL functions to_date and to_char for date columns
- * - using table alias names in select statements
- * - joining of tables (using ANSI and NON-ANSI syntax) but only JOIN or INNER JOIN with "="-comparator in join condition
- * - support of sequences
- * 
- * Currently not supported features are e.g.:
- * 
- * - constraints of any type
- * - orderBy
- * - joining of tables other than INNER JOIN and joining with comparators in join condition other than "="
- * - alter table (modifying table structure after creating)
- * - commit
- * - multi-threaded access to the data in the db
- * - unsupported comparator types in where clauses:  <=,   <,   >,  >=, like
- * - unsupported OR operator for where clauses
- * - JOINs
- * - SQL functions such as count, max, min
- * - subselects
- * - WITH clauses
- *
  * If you need a functionality of a real DB that is not yet implemented here,
  * feel free to implement it (test driven!)...
  * 

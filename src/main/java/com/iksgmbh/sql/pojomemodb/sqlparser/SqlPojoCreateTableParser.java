@@ -1,3 +1,18 @@
+/*
+ * Copyright 2016 IKS Gesellschaft fuer Informations- und Kommunikationssysteme mbH
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.iksgmbh.sql.pojomemodb.sqlparser;
 
 import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.CLOSING_PARENTHESIS;
@@ -44,15 +59,23 @@ public class SqlPojoCreateTableParser extends AbstractSqlPojoMemoryParser
 			throw new SQLException("Left parenthis missing...");
 		}
 		
-		parseColumnData(parseResult.unparsedRest.substring(1), tableMetaData);
+		processColumnData(parseResult.unparsedRest.substring(1), tableMetaData);
 
 		return tableMetaData;
 	}
 
-	private String parseColumnData(String unparsedRest, final TableMetaData tableMetaData) throws SQLException 
+	/**
+	 * Parses column data and creates new columns in tableMetaData
+	 * 
+	 * @param unparsedRest
+	 * @param tableMetaData
+	 * @return
+	 * @throws SQLException
+	 */
+	private String processColumnData(String unparsedRest, final TableMetaData tableMetaData) throws SQLException 
 	{
 		while ( ! isEndOfColumnDataReached(unparsedRest) )  {
-			unparsedRest = parseColumnInformation(unparsedRest.trim(), tableMetaData);
+			unparsedRest = processColumnInformation(unparsedRest.trim(), tableMetaData);
 	    }
 		
 		return unparsedRest;
@@ -75,15 +98,16 @@ public class SqlPojoCreateTableParser extends AbstractSqlPojoMemoryParser
 	
 
 	/**
-	 * TODO
+	 * Parses column data and creates a new column in tableMetaData
+	 * 
 	 * @param columnInformation
 	 * @param tableMetaData
 	 * @return
 	 * @throws SQLException
 	 */
-	private String parseColumnInformation(String columnInformation, 
-			                             final TableMetaData tableMetaData) 
-			                             throws SQLException
+	private String processColumnInformation(final String columnInformation, 
+			                                final TableMetaData tableMetaData) 
+			                                throws SQLException
 	{
 		// parse column name
 		InterimParseResult parseResult = parseNextValue(columnInformation, SPACE);

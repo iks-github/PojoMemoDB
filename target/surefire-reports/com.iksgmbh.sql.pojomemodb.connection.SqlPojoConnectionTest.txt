@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.iksgmbh.sql.pojomemodb.connection.SqlPojoConnectionTest
+-------------------------------------------------------------------------------
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.266 sec

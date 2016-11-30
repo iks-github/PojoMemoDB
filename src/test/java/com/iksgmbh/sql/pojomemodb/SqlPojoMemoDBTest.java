@@ -1,3 +1,18 @@
+/*
+ * Copyright 2016 IKS Gesellschaft fuer Informations- und Kommunikationssysteme mbH
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.iksgmbh.sql.pojomemodb;
 
 import static org.junit.Assert.assertEquals;
@@ -20,9 +35,9 @@ import org.junit.Test;
 import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.statistics.TableStoreStatistics;
 import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.Sequence;
 import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.TableStore;
-import com.iksgmbh.sql.pojomemodb.utils.SqlStatementLoader;
+import com.iksgmbh.sql.pojomemodb.testutils.SqlStatementLoader;
 
-public class SqlPojoMemoryDBTest {
+public class SqlPojoMemoDBTest {
 	
 	private static final String TEST_CREATE_SQL_FILE = "src/test/resources/create.sql";
 	private static final String TEST_INSERT_SQL_FILE = "src/test/resources/insert.sql";
@@ -298,7 +313,10 @@ public class SqlPojoMemoryDBTest {
 		// assert
 		final TableStoreStatistics dbContent = SqlPojoMemoDB.getDbStatistics();
 		assertEquals("row number", 1,  dbContent.getNumberOfRows("TEST_TABLE_NAME"));
-		// TODO werte explicit asserten
+		@SuppressWarnings("unchecked")
+		List<Object[]> result = (List<Object[]>) SqlPojoMemoDB.execute("select * from TEST_TABLE_NAME");
+		assertEquals("field content", "A b C",  (String)(result.get(0)[0]));
+		assertEquals("field content", "x Y z",  (String)(result.get(0)[1]));
  	}
 	
 	@Test

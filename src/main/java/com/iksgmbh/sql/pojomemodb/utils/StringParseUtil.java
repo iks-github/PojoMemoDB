@@ -1,3 +1,18 @@
+/*
+ * Copyright 2016 IKS Gesellschaft fuer Informations- und Kommunikationssysteme mbH
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.iksgmbh.sql.pojomemodb.utils;
 
 import org.apache.commons.lang3.StringUtils;
@@ -77,7 +92,7 @@ public class StringParseUtil
 	 * Cuts off a piece of the input string from the beginning.
 	 * The position where to cut is defined by the given delimiters.
 	 * If more than delimiter are found, the next one 
-	 * (i.e. the one with the smallest postition) is used to cut.
+	 * (i.e. the one with the smallest position) is used to cut.
 	 * 
 	 * @param input String
 	 * @param delimiterArray collection of possible delimiters
@@ -110,7 +125,7 @@ public class StringParseUtil
 	 * @param delimiter
 	 * @return ParseResult
 	 */
-	public static InterimParseResult parseNextValueByLastOccorrence(final String input,
+	public static InterimParseResult parseNextValueByLastOccurrence(final String input,
 			                                                        final String delimiter) 
 	{
 		if (StringUtils.isEmpty(delimiter))  {
@@ -128,7 +143,7 @@ public class StringParseUtil
 		}
 		
 		final String value = input.substring(0, cutPosition).trim();
-		final String unparsedRest = input.substring(cutPosition + delimiter.length()).trim();
+		final String unparsedRest = input.substring(cutPosition + delimiter.length() ).trim();
 		
 		return new InterimParseResult(value, unparsedRest, delimiter);
 	}
