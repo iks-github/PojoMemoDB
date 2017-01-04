@@ -15,20 +15,23 @@
  */
 package com.iksgmbh.sql.pojomemodb.sqlparser.helper;
 
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.*;
-
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.AND;
+import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.WhereCondition;
+import com.iksgmbh.sql.pojomemodb.sqlparser.SqlPojoMemoParser;
+import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil;
+import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.InterimParseResult;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.WhereCondition;
-import com.iksgmbh.sql.pojomemodb.sqlparser.AbstractSqlPojoMemoryParser;
-import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil;
-import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.InterimParseResult;
+import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.*;
 
-public class WhereConditionParser extends AbstractSqlPojoMemoryParser
+/**
+ * Parses where conditions.
+ *
+ * @author Reik Oberrath
+ */
+public class WhereConditionParser extends SqlPojoMemoParser
 {
 	public static final String AND_SEPARATOR = " " + AND + " ";
 	
@@ -91,7 +94,7 @@ public class WhereConditionParser extends AbstractSqlPojoMemoryParser
 			}
 		}
 		
-		throw new SQLException("Comparator in Where condition is unkown: " + conditionAsString );
+		throw new SQLException("Comparator in Where condition is unknown: " + conditionAsString );
 	}
 
 	@Override

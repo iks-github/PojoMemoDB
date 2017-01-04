@@ -15,31 +15,15 @@
  */
 package com.iksgmbh.sql.pojomemodb.connection;
 
+import com.iksgmbh.sql.pojomemodb.SqlPojoMemoDB;
+import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.SelectionTable;
+
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.net.URL;
-import java.sql.Array;
-import java.sql.Blob;
-import java.sql.Clob;
-import java.sql.Connection;
-import java.sql.Date;
-import java.sql.NClob;
-import java.sql.ParameterMetaData;
-import java.sql.PreparedStatement;
-import java.sql.Ref;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.RowId;
-import java.sql.SQLException;
-import java.sql.SQLWarning;
-import java.sql.SQLXML;
-import java.sql.Time;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.util.Calendar;
-import java.util.List;
-
-import com.iksgmbh.sql.pojomemodb.SqlPojoMemoDB;
 
 /**
  * This class represents an incomplete implementation of java.sql.PreparedStatement class.
@@ -80,11 +64,10 @@ public class SqlPojoPreparedStatement implements PreparedStatement
 	@Override
 	public ResultSet executeQuery() throws SQLException 
 	{
-		final Object result = SqlPojoMemoDB.execute(buildOutputSql());
-		if (result instanceof List<?>)  {
-			@SuppressWarnings("unchecked")
-			List<Object[]> resultList = (List<Object[]>)result ;
-			return new SqlPojoResultSet(resultList);
+        String sql = buildOutputSql();
+        final Object result = SqlPojoMemoDB.execute(sql);  // uses the SqlExecutor
+		if (result instanceof SelectionTable)  {
+			return new SqlPojoResultSet((SelectionTable)result);
 		}
 		return null;
 	}
@@ -99,15 +82,15 @@ public class SqlPojoPreparedStatement implements PreparedStatement
 	public ResultSet executeQuery(final String sql) throws SQLException 
 	{
 		this.inputSql = sql;
-		analyseSql();		
-		@SuppressWarnings("unchecked")
-		List<Object[]> result = (List<Object[]>) SqlPojoMemoDB.execute(buildOutputSql());
+		analyseSql();
+        String outputSql = buildOutputSql();
+        SelectionTable result = (SelectionTable) SqlPojoMemoDB.execute(outputSql);  // uses the SqlExecutor
+
 		return new SqlPojoResultSet(result);
 	}
-	
-	
 
-	public String buildOutputSql() 
+
+    public String buildOutputSql()
 	{
 		final StringBuilder sb = new StringBuilder();
 		
@@ -142,6 +125,33 @@ public class SqlPojoPreparedStatement implements PreparedStatement
 		checkParameterIndex(parameterIndex);
 		replacements[parameterIndex-1] = "" + i;
 	}
+
+
+    @Override
+    public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException {
+        checkParameterIndex(parameterIndex);
+        replacements[parameterIndex-1] = x.toString();
+    }
+
+    @Override
+    public void setDate(int parameterIndex, Date x) throws SQLException {
+        checkParameterIndex(parameterIndex);
+        replacements[parameterIndex-1] = "" + x.getTime();
+    }
+
+
+    @Override
+    public void setTime(int parameterIndex, Time x) throws SQLException {
+        checkParameterIndex(parameterIndex);
+        replacements[parameterIndex-1] = "" + x.getTime();
+    }
+
+
+    @Override
+    public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException {
+        checkParameterIndex(parameterIndex);
+        replacements[parameterIndex-1] = "" + x.getTime();
+    }
 
 	private void checkParameterIndex(int parameterIndex) throws SQLException 
 	{
@@ -481,41 +491,6 @@ public class SqlPojoPreparedStatement implements PreparedStatement
 
 
 	@Override
-	public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException {
-		if (true) throw new RuntimeException("Not yet implemented!");
-		
-	}
-
-
-	@Override
-	public void setBytes(int parameterIndex, byte[] x) throws SQLException {
-		if (true) throw new RuntimeException("Not yet implemented!");
-		
-	}
-
-
-	@Override
-	public void setDate(int parameterIndex, Date x) throws SQLException {
-		if (true) throw new RuntimeException("Not yet implemented!");
-		
-	}
-
-
-	@Override
-	public void setTime(int parameterIndex, Time x) throws SQLException {
-		if (true) throw new RuntimeException("Not yet implemented!");
-		
-	}
-
-
-	@Override
-	public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException {
-		if (true) throw new RuntimeException("Not yet implemented!");
-		
-	}
-
-
-	@Override
 	public void setAsciiStream(int parameterIndex, InputStream x, int length) throws SQLException {
 		if (true) throw new RuntimeException("Not yet implemented!");
 		
@@ -563,6 +538,12 @@ public class SqlPojoPreparedStatement implements PreparedStatement
 		
 	}
 
+
+    @Override
+    public void setBytes(int parameterIndex, byte[] x) throws SQLException {
+        if (true) throw new RuntimeException("Not yet implemented!");
+
+    }
 
 	@Override
 	public void setCharacterStream(int parameterIndex, Reader reader, int length) throws SQLException {
@@ -779,14 +760,14 @@ public class SqlPojoPreparedStatement implements PreparedStatement
 		if (true) throw new RuntimeException("Not yet implemented!");
 	}
 
-	
-	@Override
+
+    // @Override not before Java 1.7
 	public void closeOnCompletion() throws SQLException {
 		if (true) throw new RuntimeException("Not yet implemented!");
 	}
 
-	
-	@Override
+
+    // @Override not before Java 1.7
 	public boolean isCloseOnCompletion() throws SQLException {
 		if (true) throw new RuntimeException("Not yet implemented!");
 		return false;

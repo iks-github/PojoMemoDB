@@ -15,29 +15,25 @@
  */
 package com.iksgmbh.sql.pojomemodb.sqlparser;
 
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.SET;
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.WHERE;
-import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.CLOSING_PARENTHESIS;
-import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.COMMA;
-import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.EQUALSIGN;
-import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.OPENING_PARENTHESIS;
-import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.parseNextValue;
-
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.iksgmbh.sql.pojomemodb.SQLKeyWords;
 import com.iksgmbh.sql.pojomemodb.SqlExecutor.ParsedUpdateData;
 import com.iksgmbh.sql.pojomemodb.SqlPojoMemoDB;
 import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.ApartValue;
 import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.WhereCondition;
 import com.iksgmbh.sql.pojomemodb.sqlparser.helper.WhereConditionParser;
-import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.InterimParseResult;
+import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.*;
 
-public class SqlPojoUpdateParser extends AbstractSqlPojoMemoryParser
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.SET;
+import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.WHERE;
+import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.*;
+
+public class UpdateParser extends SqlPojoMemoParser
 {	
-	public SqlPojoUpdateParser(final SqlPojoMemoDB memoryDb)  {
+	public UpdateParser(final SqlPojoMemoDB memoryDb)  {
 		this.memoryDb = memoryDb;
 	}
 

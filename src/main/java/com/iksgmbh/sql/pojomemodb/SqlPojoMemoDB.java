@@ -15,16 +15,16 @@
  */
 package com.iksgmbh.sql.pojomemodb;
 
-import java.sql.Connection;
-import java.sql.SQLDataException;
-import java.sql.SQLException;
-
 import com.iksgmbh.sql.pojomemodb.connection.SqlPojoConnection;
 import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.data.SequenceData;
 import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.data.TableStoreData;
 import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.metadata.TableStoreMetaData;
 import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.statistics.TableStoreStatistics;
 import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.TableStore;
+
+import java.sql.Connection;
+import java.sql.SQLDataException;
+import java.sql.SQLException;
 
 /**
  * This class represents the main class of an incomplete but lightweight implementation of a SQL database,
@@ -54,7 +54,9 @@ public class SqlPojoMemoDB
 	/**
 	 * Private Singleton Constructor!
 	 */
-	private SqlPojoMemoDB()  {
+	private SqlPojoMemoDB()
+    {
+        DbProperties.load();
 		tableStore = new TableStore();
 		sqlExecutor = new SqlExecutor(this);
 		connection = new SqlPojoConnection();
@@ -65,7 +67,7 @@ public class SqlPojoMemoDB
 	// #########################################################################################
 	
 	/**
-	 * For test purpose
+	 * For test purpose.
 	 * @return SqlPojoMemoryDB 
 	 */
 	public static SqlPojoMemoDB getInstance() {
@@ -73,6 +75,7 @@ public class SqlPojoMemoDB
 	}
 	
 	/**
+     * Returns the SqlPojoMemo-Implementation of a java.sql.Connection.
 	 * @return the single java.sql.Connection instance this MemoryDB 
 	 */
 	public static Connection getConnection() {
@@ -80,8 +83,8 @@ public class SqlPojoMemoDB
 	}
 	
 	/**
-	 * Executes a sql statement
-	 * @param data found by a select statement or null (e.g. for insert statements)
+	 * Executes a sql statement.
+	 * @param sql to execute
 	 * @throws SQLException 
 	 */
 	public static Object execute(final String sql) throws SQLException {
@@ -89,7 +92,7 @@ public class SqlPojoMemoDB
 	}
 
 	/**
-	 * Some metrics on the data in the DB.
+	 * Returns some metrics on the database content.
 	 * @return ContentStatistics
 	 */
 	public static TableStoreStatistics getDbStatistics() {
@@ -113,7 +116,7 @@ public class SqlPojoMemoDB
 	}
 
 	/**
-	 * Results in each table being empty.
+	 * Results in all tables being empty.
 	 * @return total number of datasets deleted
 	 */
 	public static int removeAllContentOfAllTables() {

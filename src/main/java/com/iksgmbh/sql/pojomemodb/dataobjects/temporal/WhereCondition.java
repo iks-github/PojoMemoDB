@@ -15,19 +15,12 @@
  */
 package com.iksgmbh.sql.pojomemodb.dataobjects.temporal;
 
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.COMPARATOR_EQUAL;
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.COMPARATOR_IS_NULL;
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.COMPARATOR_GREATER;
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.COMPARATOR_GREATER_EQUAL;
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.COMPARATOR_LESS;
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.COMPARATOR_LESS_EQUAL;
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.COMPARATOR_NOT_NULL;
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.COMPARATOR_UNEQUAL;
-
 import java.sql.SQLException;
 
+import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.*;
+
 /**
- * Parses and stores information of a where clause.
+ * Stores information of a where clause.
  *  
  * @author Reik Oberrath
  */

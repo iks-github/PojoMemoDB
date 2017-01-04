@@ -15,46 +15,40 @@
  */
 package com.iksgmbh.sql.pojomemodb;
 
+import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.data.TableData;
+import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.metadata.TableMetaData;
+import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.Sequence;
+import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.Table;
+import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.*;
+import com.iksgmbh.sql.pojomemodb.sqlparser.*;
+import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil;
+
 import java.sql.SQLDataException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.data.TableData;
-import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.metadata.TableMetaData;
-import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.Sequence;
-import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.ApartValue;
-import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.JoinTable;
-import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.WhereCondition;
-import com.iksgmbh.sql.pojomemodb.sqlparser.SqlPojoCreateSequenceParser;
-import com.iksgmbh.sql.pojomemodb.sqlparser.SqlPojoCreateTableParser;
-import com.iksgmbh.sql.pojomemodb.sqlparser.SqlPojoDeleteParser;
-import com.iksgmbh.sql.pojomemodb.sqlparser.SqlPojoInsertIntoParser;
-import com.iksgmbh.sql.pojomemodb.sqlparser.SqlPojoSelectParser;
-import com.iksgmbh.sql.pojomemodb.sqlparser.SqlPojoUpdateParser;
-import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil;
 
 public class SqlExecutor 
 {
 	private SqlPojoMemoDB memoryDb;
 	
 	// parser for the different SQL commands
-	private SqlPojoCreateTableParser createTableParser;
-	private SqlPojoInsertIntoParser insertIntoParser;
-	private SqlPojoSelectParser selectParser;
-	private SqlPojoUpdateParser updateParser;
-	private SqlPojoDeleteParser deleteParser;
-	private SqlPojoCreateSequenceParser createSequenceParser;
+	private CreateTableParser createTableParser;
+	private InsertIntoParser insertIntoParser;
+	private SelectParser selectParser;
+	private UpdateParser updateParser;
+	private DeleteTableParser deleteParser;
+	private CreateSequenceParser createSequenceParser;
 	
 	public SqlExecutor(final SqlPojoMemoDB sqlPojoMemoryDB) 
 	{
 		this.memoryDb = sqlPojoMemoryDB;
-		createTableParser = new SqlPojoCreateTableParser(sqlPojoMemoryDB);
-		insertIntoParser = new SqlPojoInsertIntoParser(sqlPojoMemoryDB);
-		selectParser = new SqlPojoSelectParser(sqlPojoMemoryDB);
-		updateParser = new SqlPojoUpdateParser(sqlPojoMemoryDB);
-		deleteParser = new SqlPojoDeleteParser(sqlPojoMemoryDB);
-		createSequenceParser = new SqlPojoCreateSequenceParser(sqlPojoMemoryDB);
+		createTableParser = new CreateTableParser(sqlPojoMemoryDB);
+		insertIntoParser = new InsertIntoParser(sqlPojoMemoryDB);
+		selectParser = new SelectParser(sqlPojoMemoryDB);
+		updateParser = new UpdateParser(sqlPojoMemoryDB);
+		deleteParser = new DeleteTableParser(sqlPojoMemoryDB);
+		createSequenceParser = new CreateSequenceParser(sqlPojoMemoryDB);
 	}
 	
 	public Object executeSqlStatement(final String sql) throws SQLException 
@@ -147,26 +141,35 @@ public class SqlExecutor
 		}
 
 		return toReturn;
-	}	
+	}
 
-	private List<Object[]> executeSelectStatement(final String sql) throws SQLException 
+	private SelectionTable executeSelectStatement(final String sql) throws SQLException 
 	{
 		final ParsedSelectData parseResult = selectParser.parseSelectSql(sql);
-		
-		if (parseResult.tableNames.size() == 1)
+        final TableData tableData;
+        final List<Object[]> selectedData;
+
+        if (parseResult.tableNames.size() == 1)
 		{
 			// simple select for a single table
-			final TableData tableData = memoryDb.getTableStoreData().getTableData(parseResult.tableNames.get(0));
+			tableData = memoryDb.getTableStoreData().getTableData(parseResult.tableNames.get(0));
 			
 			if (parseResult.selectedColumns == null) {
 				parseResult.selectedColumns = tableData.getNamesOfColumns();
 			}
-			
-			return tableData.select(parseResult.selectedColumns, parseResult.whereConditions);
-		}
 
-		final List<WhereCondition> whereConditions = getOnlyNonJoinConditions(parseResult.whereConditions);
-		return buildJoinTable(parseResult).select(parseResult.selectedColumns, whereConditions);
+            selectedData = tableData.select(parseResult.selectedColumns, parseResult.whereConditions, parseResult.orderConditions);
+		}
+        else // build join table and select on it
+        {
+            tableData = buildJoinTable(parseResult);
+            final List<WhereCondition> whereConditions = getOnlyNonJoinConditions(parseResult.whereConditions);
+            selectedData = tableData.select(parseResult.selectedColumns, whereConditions, parseResult.orderConditions);
+        }
+
+        final SelectionTable toReturn = new SelectionTable((Table)tableData, parseResult.selectedColumns);
+        toReturn.setDataRows(selectedData);
+        return toReturn;
 	}
 	
 	TableData buildJoinTable(final ParsedSelectData parseResult) throws SQLDataException 
@@ -281,14 +284,17 @@ public class SqlExecutor
 		public List<String> tableNames;
 		public List<String> selectedColumns;
 		public List<WhereCondition> whereConditions;
+		public List<OrderCondition> orderConditions;
 		
 		public ParsedSelectData(final List<String> tableNames, 
 				                final List<String> selectedColumns, 
-				                final List<WhereCondition> whereConditions) 
+				                final List<WhereCondition> whereConditions,
+								final List<OrderCondition> orderConditions)
 		{
 			this.tableNames = tableNames;
 			this.selectedColumns = selectedColumns;
 			this.whereConditions = whereConditions;
+			this.orderConditions = orderConditions;
 		}
 
 		

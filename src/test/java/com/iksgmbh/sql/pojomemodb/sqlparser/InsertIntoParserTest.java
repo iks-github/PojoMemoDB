@@ -23,9 +23,9 @@ import org.junit.Test;
 
 import com.iksgmbh.sql.pojomemodb.SqlExecutor.ParsedInsertData;
 
-public class SqlPojoInsertIntoParserTest {
+public class InsertIntoParserTest {
 
-	private SqlPojoInsertIntoParser sut = new SqlPojoInsertIntoParser(null);
+	private InsertIntoParser sut = new InsertIntoParser(null);
 
 	
 	@Test

@@ -15,23 +15,19 @@
  */
 package com.iksgmbh.sql.pojomemodb.dataobjects.persistent;
 
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.COMPARATOR_EQUAL;
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.COMPARATOR_IS_NULL;
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.COMPARATOR_NOT_NULL;
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.COMPARATOR_UNEQUAL;
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.NEXTVAL;
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.NULL;
-
-import java.sql.SQLDataException;
-
 import com.iksgmbh.sql.pojomemodb.DbProperties;
 import com.iksgmbh.sql.pojomemodb.SqlPojoMemoDB;
 import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.data.ColumnData;
 import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.data.SequenceData;
 import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.metadata.ColumnMetaData;
 import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.statistics.ColumnStatistics;
-import com.iksgmbh.sql.pojomemodb.dataobjects.validator.Validator;
-import com.iksgmbh.sql.pojomemodb.dataobjects.validator.Validator.ValidatorType;
+import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.ColumnInitData;
+import com.iksgmbh.sql.pojomemodb.validator.TypeValidator;
+import com.iksgmbh.sql.pojomemodb.validator.TypeValidator.ValidatorType;
+
+import java.sql.SQLDataException;
+
+import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.*;
 
 /**
  * Metadata about a single table.
@@ -45,24 +41,34 @@ public class Column implements ColumnStatistics, ColumnMetaData, ColumnData
 	private boolean nullable;
 	private int orderNumber;
 	private SqlPojoMemoDB memoryDB;
-	private Validator validator;
+	private TypeValidator typeValidator;
+	private String defaultValue;
+    private String primaryKeyId;
+    private String uniqueConstraintId;
 
-	public Column(final String columnName, 
-			      final String columnType,
-			      final boolean nullable,
-			      final int orderNumber, 
-			      final SqlPojoMemoDB memoryDB) throws SQLDataException 
+    public Column(final ColumnInitData columnInitData,
+                  final int orderNumber,
+				  final SqlPojoMemoDB memoryDB) throws SQLDataException
 	{
-		this.columnName = columnName.toUpperCase();
-		this.columnType = columnType.toUpperCase();
-		this.nullable = nullable;
-		this.orderNumber = orderNumber;
-		this.memoryDB = memoryDB;
+        this.columnName = columnInitData.columnName.toUpperCase();
+        this.columnType = columnInitData.columnType.toUpperCase();
+        this.nullable = columnInitData.nullable;
+        this.defaultValue = columnInitData.defaultValue;
+        this.primaryKeyId = columnInitData.primaryKey;
+        this.uniqueConstraintId = columnInitData.uniqueKey;
+        this.orderNumber = orderNumber;
+        this.memoryDB = memoryDB;
+
 		try {
-			this.validator = Validator.getInstance(columnType);
+			this.typeValidator = TypeValidator.getInstance(columnType);
 		} catch (SQLDataException e) {
-			throw new SQLDataException(e.getMessage() + " for column '" + columnName + "'.");
+			throw new SQLDataException(e.getMessage() + " Concerned column: '" + columnName + "'.");
 		}
+        try {
+            typeValidator.validateValueForType(defaultValue);
+        } catch (SQLDataException e) {
+            throw new SQLDataException("Value '" + defaultValue + "' is not valid for column " + columnName + "!");
+        }
 	}
 
 	public int getIndexInTable() {
@@ -70,7 +76,11 @@ public class Column implements ColumnStatistics, ColumnMetaData, ColumnData
 	}
 	
 	public ValidatorType getValidationType() {
-		return validator.getType();
+		return typeValidator.getType();
+	}
+
+	public TypeValidator getTypeValidator() {
+		return typeValidator;
 	}
 
 	// #########################################################################################
@@ -112,7 +122,7 @@ public class Column implements ColumnStatistics, ColumnMetaData, ColumnData
 	public Object convertIntoColumnType(final String valueAsString) throws SQLDataException 
 	{
 		if (NULL.equals(valueAsString) || valueAsString == null) {
-			return null;
+            return null;
 		}
 		
 		if (valueAsString.endsWith(NEXTVAL)) {
@@ -123,7 +133,7 @@ public class Column implements ColumnStatistics, ColumnMetaData, ColumnData
 			return null;
 		}
 
-		return validator.convertIntoColumnType(valueAsString);
+		return typeValidator.convertIntoColumnType(valueAsString);
 	}
 
 	private Object getValueFromSequence(String valueAsString) throws SQLDataException 
@@ -145,13 +155,14 @@ public class Column implements ColumnStatistics, ColumnMetaData, ColumnData
 	 */
 	@Override
 	public void validate(Object value) throws SQLDataException {
-		validator.validate(value);
+		typeValidator.validateValueForType(value);
 	}
 
 	/**
 	 * Compares a data value against a WhereCondition value
-	 * @param String comparator
-	 * @param valueToCheck
+     * @param conditionValueAsString
+	 * @param comparator
+	 * @param dataValueToCheck
 	 * @return true if dataValueToCheck is valid 
 	 * @throws SQLDataException 
 	 */
@@ -198,4 +209,34 @@ public class Column implements ColumnStatistics, ColumnMetaData, ColumnData
 		return conditionValue.toString().equals(dataValueToCheck.toString());
 	}
 
+	public String getDefaultValue() {
+		return defaultValue;
+	}
+
+    @Override
+    public String getPrimaryKeyId() {
+        return primaryKeyId;
+    }
+
+    @Override
+    public String getUniqueConstraintId() {
+        return uniqueConstraintId;
+    }
+
+
+    public boolean areDublicatesAllowed() {
+        return primaryKeyId == null && uniqueConstraintId == null;
+    }
+
+    public void setPrimaryKeyId(String primaryKeyId) {
+        this.primaryKeyId = primaryKeyId;
+    }
+
+    public void setNullable(boolean nullable) {
+        this.nullable = nullable;
+    }
+
+    public void setUniqueConstraintId(String id) {
+        this.uniqueConstraintId = id;
+    }
 }

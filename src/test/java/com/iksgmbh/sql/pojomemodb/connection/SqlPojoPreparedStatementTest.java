@@ -28,6 +28,7 @@ public class SqlPojoPreparedStatementTest {
 		final SqlPojoPreparedStatement statement = new SqlPojoPreparedStatement("select * from TEN_SUM_FIELD where ID=?");
 		statement.setLong(1, 1);
 		final String result = statement.buildOutputSql();
+		statement.close();
 	
 		// assert
 		assertEquals("result", "select * from TEN_SUM_FIELD where ID=1", result);

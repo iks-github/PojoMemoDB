@@ -15,10 +15,11 @@
  */
 package com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.metadata;
 
-import java.sql.SQLDataException;
-
 import com.iksgmbh.sql.pojomemodb.SqlPojoMemoDB;
 import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.statistics.TableStatistics;
+import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.ColumnInitData;
+
+import java.sql.SQLDataException;
 
 /**
  * List for methods to manage the structure of a table. 
@@ -27,7 +28,6 @@ import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.statistics.TableStatist
  */
 public interface TableMetaData extends TableStatistics {
 
-	void createNewColumn(String columnName, String columnType, 
-			             boolean nullable,  SqlPojoMemoDB memoryDb) throws SQLDataException;
+	void createNewColumn(ColumnInitData columnInitData, SqlPojoMemoDB memoryDb) throws SQLDataException;
 
 }

@@ -25,52 +25,63 @@ public class SQLKeyWords {
 	public static final String SELECT_COMMAND = "select";
 	public static final String UPDATE_COMMAND = "update";
 
-	// SqlPojoCreateSequenceParser
+	// CreateSequenceParser
 	public static final String START_WITH = "start with";
 	
-	// SqlPojoCreateTableParser
-	public static final String NOT_NULL_ENABLED = "NOT NULL ENABLE";
+	// CreateTableParser
+    public static final String DEFAULT = "DEFAULT";
+    public static final String PRIMARY_KEY = "PRIMARY KEY";
+    public static final String UNIQUE = "UNIQUE";
+	public static final String NOT_NULL = "NOT NULL";
+	public static final String NOT_NULL_ENABLED = NOT_NULL + " ENABLE";
 	public static final String CONSTRAINT = "CONSTRAINT";
-	public static final String USING_INDEX = "USING_INDEX";
+    public static final String USING_INDEX = "USING INDEX";
 
-	// SqlPojoSelectParser
+	// SelectParser
 	public static final String ALL_COLUMNS = "*";
 	
-	// SqlPojoInsertIntoParser
+	// InsertIntoParser
 	public static final String VALUES = "values";
 
-	// SqlPojoUpdateParser
+	// UpdateParser
 	public static final String SET = "set";
 
 	// where clauses
 	public static final String WHERE = "where";
 	public static final String AND = "and";
-	
-	// ANSI JOIN Statements
+
+    // ANSI JOIN Statements
 	public static final String ON = "on";
-	public static final String JOIN = "JOIN";
+    public static final String JOIN = "JOIN";
 	public static final String INNER_JOIN = "INNER " + JOIN;
-	
-	// misc
+
+    // misc
 	public static final String AS = "as";
-	public static final String FROM = "from";
-	public static final String NEXTVAL = "nextval";
-	public static final String NULL = "null";
-	public static final String SYSDATE = "sysdate";
+    public static final String FROM = "from";
+    public static final String NEXTVAL = "nextval";
+    public static final String NULL = "null";
+    public static final String SYSDATE = "sysdate";
+    public static final String CURRENT_TIMESTAMP = "CURRENT_TIMESTAMP";
+    public static final String GET_DATE = "GETDATE()";
+
 	public static final String DUAL = "DUAL";
-
-	// SQL functions
+    // SQL functions
 	public static final String TO_DATE = "to_date";
+
 	public static final String TO_CHAR = "to_char";
-
-	// Comparators
+    // Comparators
 	public static final String COMPARATOR_EQUAL = "=";
-	public static final String COMPARATOR_UNEQUAL = "<>";
-	public static final String COMPARATOR_GREATER = ">";
-	public static final String COMPARATOR_LESS = "<";
-	public static final String COMPARATOR_GREATER_EQUAL = ">=";
-	public static final String COMPARATOR_LESS_EQUAL = "<=";
-	public static final String COMPARATOR_NOT_NULL = "IS NOT NULL";
-	public static final String COMPARATOR_IS_NULL = "IS NULL";
+    public static final String COMPARATOR_UNEQUAL = "<>";
+    public static final String COMPARATOR_GREATER = ">";
+    public static final String COMPARATOR_LESS = "<";
+    public static final String COMPARATOR_GREATER_EQUAL = ">=";
+    public static final String COMPARATOR_LESS_EQUAL = "<=";
+    public static final String COMPARATOR_NOT_NULL = "IS NOT NULL";
 
+	public static final String COMPARATOR_IS_NULL = "IS NULL";
+    // order by
+	public static final String ORDER_BY = "ORDER BY";
+    public static final String ASC = "ASC";
+
+	public static final String DESC = "DESC";
 }

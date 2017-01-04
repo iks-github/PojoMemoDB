@@ -15,17 +15,16 @@
  */
 package com.iksgmbh.sql.pojomemodb.dataobjects.temporal;
 
-import java.math.BigDecimal;
-import java.sql.SQLDataException;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.joda.time.DateTime;
-
 import com.iksgmbh.sql.pojomemodb.SQLKeyWords;
 import com.iksgmbh.sql.pojomemodb.SqlPojoMemoDB;
 import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.Column;
 import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.Table;
+import org.joda.time.DateTime;
+
+import java.math.BigDecimal;
+import java.sql.SQLDataException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class JoinTable extends Table
 {
@@ -45,9 +44,17 @@ public class JoinTable extends Table
 	private void addColumnsFromTable(final Table table) throws SQLDataException {
 		final List<String> namesOfColumns = table.getNamesOfColumns();
 		
-		for (String columnName : namesOfColumns) {
+		for (String columnName : namesOfColumns)
+        {
 			final Column column = table.getColumn(columnName);
-			createNewColumn(table.getTableName() + "." + columnName, column.getColumnType(), column.isNullable(), memoryDb);
+            final ColumnInitData columnInitData = new ColumnInitData(table.getTableName() + "." + columnName);
+
+            columnInitData.columnType = column.getColumnType();
+            columnInitData.nullable = column.isNullable();
+            columnInitData.primaryKey = column.getPrimaryKeyId();
+            columnInitData.uniqueKey = column.getUniqueConstraintId();
+
+            createNewColumn(columnInitData, memoryDb);
 		}
 	}
 

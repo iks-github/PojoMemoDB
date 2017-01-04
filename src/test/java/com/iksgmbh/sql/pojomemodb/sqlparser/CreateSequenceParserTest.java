@@ -25,9 +25,9 @@ import org.junit.Test;
 import com.iksgmbh.sql.pojomemodb.SqlExecutor.ParsedSequenceData;
 
 
-public class SqlPojoCreateSequenceParserTest {
+public class CreateSequenceParserTest {
 	
-	private SqlPojoCreateSequenceParser sut = new SqlPojoCreateSequenceParser(null);
+	private CreateSequenceParser sut = new CreateSequenceParser(null);
 
 	@Test
 	public void parsesCreateSequenceStatement() throws SQLException 

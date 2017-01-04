@@ -24,9 +24,9 @@ import org.junit.Test;
 import com.iksgmbh.sql.pojomemodb.SqlExecutor.ParsedDeleteData;
 
 
-public class SqlPojoDeleteParserTest {
+public class DeleteTableParserTest {
 	
-	private SqlPojoDeleteParser sut = new SqlPojoDeleteParser(null);
+	private DeleteTableParser sut = new DeleteTableParser(null);
 
 	@Test
 	public void parsesDeleteAlllRowVariantA() throws SQLException 

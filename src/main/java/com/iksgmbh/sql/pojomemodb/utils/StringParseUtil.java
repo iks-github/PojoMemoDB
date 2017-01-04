@@ -156,8 +156,10 @@ public class StringParseUtil
 		
 		for (String delimiterCandidate : delimiterArray) 
 		{
+            // apply default algorithm to calc pos
 			int pos = input.toLowerCase().indexOf(delimiterCandidate.toLowerCase());
-			
+
+            // apply specific algorithm to calc pos with special solutions
 			if (COMMA.equals(delimiterCandidate)) {
 				pos = getNextValidCommaPosition(input);
 			}
@@ -227,6 +229,7 @@ public class StringParseUtil
 			if (posOfComma < posOfClosingParenthesis) {
 				String inputPart = input.substring(posOfClosingParenthesis);
 				posOfComma = inputPart.indexOf(COMMA);
+                if (posOfComma == -1) return -1; // no valid comma found
 				return posOfClosingParenthesis + posOfComma;
 			}
 		}
@@ -262,7 +265,18 @@ public class StringParseUtil
 		return input.indexOf(SPACE);
 	}
 
-	public static class InterimParseResult 
+    public static int countOccurrencesOf(String input, char charToSearch) {
+        final char[] chars = input.toCharArray();
+        int counter = 0;
+        for (char c : chars) {
+            if (c == charToSearch) {
+                counter++;
+            }
+        }
+        return counter;
+    }
+
+    public static class InterimParseResult
 	{
 		@Override
 		public String toString() {

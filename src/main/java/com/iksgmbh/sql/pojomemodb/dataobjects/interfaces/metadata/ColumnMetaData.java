@@ -25,4 +25,7 @@ import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.statistics.ColumnStatis
 
 public interface ColumnMetaData extends ColumnStatistics {
 
+    String getPrimaryKeyId();
+
+    String getUniqueConstraintId();
 }

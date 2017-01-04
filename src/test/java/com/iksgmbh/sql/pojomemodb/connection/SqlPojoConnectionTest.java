@@ -15,19 +15,17 @@
  */
 package com.iksgmbh.sql.pojomemodb.connection;
 
-import static org.junit.Assert.*;
+import com.iksgmbh.sql.pojomemodb.SqlPojoMemoDB;
+import com.iksgmbh.sql.pojomemodb.utils.SqlStatementLoader;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
-
-import com.iksgmbh.sql.pojomemodb.SqlPojoMemoDB;
-import com.iksgmbh.sql.pojomemodb.testutils.SqlStatementLoader;
+import static org.junit.Assert.assertEquals;
 
 public class SqlPojoConnectionTest
 {
@@ -45,12 +43,8 @@ public class SqlPojoConnectionTest
 		// arrange
 		final String createStatement = SqlStatementLoader.loadSqlStatement(TEST_CREATE_SQL_FILE, 1);
 		SqlPojoMemoDB.execute( createStatement );
-		
-		final List<String> sqlStatements = SqlStatementLoader.loadAllSqlStatement(TEST_INSERT_SQL_FILE);
-		for (String insertStatement : sqlStatements) {
-			SqlPojoMemoDB.execute( insertStatement );
-		}		
-		
+		SqlStatementLoader.execAllSqlStatement(TEST_INSERT_SQL_FILE);
+
 		// act 
 		final PreparedStatement prepareStatement = SqlPojoMemoDB.getConnection().prepareStatement("select * from TEN_SUM_FIELD");
 		final ResultSet result = prepareStatement.executeQuery();
@@ -65,12 +59,8 @@ public class SqlPojoConnectionTest
 		// arrange
 		final String createStatement = SqlStatementLoader.loadSqlStatement(TEST_CREATE_SQL_FILE, 1);
 		SqlPojoMemoDB.execute( createStatement );
-		
-		final List<String> sqlStatements = SqlStatementLoader.loadAllSqlStatement(TEST_INSERT_SQL_FILE);
-		for (String insertStatement : sqlStatements) {
-			SqlPojoMemoDB.execute( insertStatement );
-		}		
-		
+		SqlStatementLoader.execAllSqlStatement(TEST_INSERT_SQL_FILE);
+
 		// act 
 		final PreparedStatement prepareStatement = SqlPojoMemoDB.getConnection().prepareStatement("select * from TEN_SUM_FIELD where ID=1");
 		final ResultSet result = prepareStatement.executeQuery();
@@ -85,12 +75,8 @@ public class SqlPojoConnectionTest
 		// arrange
 		final String createStatement = SqlStatementLoader.loadSqlStatement(TEST_CREATE_SQL_FILE, 1);
 		SqlPojoMemoDB.execute( createStatement );
-		
-		final List<String> sqlStatements = SqlStatementLoader.loadAllSqlStatement(TEST_INSERT_SQL_FILE);
-		for (String insertStatement : sqlStatements) {
-			SqlPojoMemoDB.execute( insertStatement );
-		}		
-		
+		SqlStatementLoader.execAllSqlStatement(TEST_INSERT_SQL_FILE);
+
 		// act 
 		final PreparedStatement prepareStatement = SqlPojoMemoDB.getConnection().prepareStatement("select * from TEN_SUM_FIELD where ID=?");
 		prepareStatement.setLong(1, 1);
@@ -100,9 +86,14 @@ public class SqlPojoConnectionTest
 		// assert
 		assertEquals("result", 1, result.getLong(1));
 	}
-	
-	
-	private Object countSizeOfResultSet(final ResultSet result) throws SQLException {
+
+    @Test
+    public void returnsDatabaseMetaDataAndDatabaseName() throws IOException, SQLException  {
+        assertEquals("database name", "SqlPojoMemoDb", SqlPojoMemoDB.getConnection().getMetaData().getDatabaseProductName());
+    }
+
+
+    private Object countSizeOfResultSet(final ResultSet result) throws SQLException {
 		int count = 0;
 		while (result.next())  {
 			count++;

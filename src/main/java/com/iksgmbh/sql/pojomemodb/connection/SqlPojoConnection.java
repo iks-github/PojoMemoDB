@@ -53,14 +53,20 @@ public class SqlPojoConnection implements Connection
 	public Statement createStatement() throws SQLException {
 		return new SqlPojoPreparedStatement("");
 	}
-	
+
+
+    @Override
+    public DatabaseMetaData getMetaData() throws SQLException {
+        return new SqlPojoDatabaseMetaData();
+    }
+
 
 	// ###########################################################################
 	//                 not   implemented    dummy    methods
 	// ###########################################################################
-	
-	
-	@Override
+
+
+    @Override
 	public <T> T unwrap(Class<T> iface) throws SQLException {
 		if (true) throw new RuntimeException("Not yet implemented!");
 		return null;
@@ -118,12 +124,6 @@ public class SqlPojoConnection implements Connection
 	public boolean isClosed() throws SQLException {
 		if (true) throw new RuntimeException("Not yet implemented!");
 		return false;
-	}
-
-	@Override
-	public DatabaseMetaData getMetaData() throws SQLException {
-		if (true) throw new RuntimeException("Not yet implemented!");
-		return null;
 	}
 
 	@Override
@@ -347,32 +347,32 @@ public class SqlPojoConnection implements Connection
 	}
 
 
-	@Override
+	// @Override not before Java 1.7
 	public void abort(Executor arg0) throws SQLException {
 		if (true) throw new RuntimeException("Not yet implemented!");
 	}
 
 
-	@Override
+    // @Override not before Java 1.7
 	public int getNetworkTimeout() throws SQLException {
 		if (true) throw new RuntimeException("Not yet implemented!");
 		return 0;
 	}
 
 
-	@Override
+    // @Override not before Java 1.7
 	public String getSchema() throws SQLException {
 		if (true) throw new RuntimeException("Not yet implemented!");
 		return null;
 	}
 
 
-	@Override
+    // @Override not before Java 1.7
 	public void setNetworkTimeout(Executor arg0, int arg1) throws SQLException {
 		if (true) throw new RuntimeException("Not yet implemented!");
 	}
 
-	@Override
+    // @Override not before Java 1.7
 	public void setSchema(String arg0) throws SQLException {
 		if (true) throw new RuntimeException("Not yet implemented!");
 	}

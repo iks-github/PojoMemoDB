@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.iksgmbh.sql.pojomemodb.testutils;
+package com.iksgmbh.sql.pojomemodb.utils;
+
+import com.iksgmbh.sql.pojomemodb.SqlPojoMemoDB;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.iksgmbh.sql.pojomemodb.utils.FileUtil;
 
 /**
  * Loads a single SQL statement from a text file.
@@ -67,7 +68,15 @@ public class SqlStatementLoader {
 		
 		throw new RuntimeException("File contains less than " + number + " statements!");
 	}
-	
+
+	public static final void execAllSqlStatement(final String pathAndFileName)
+			                                     throws IOException, SQLException {
+		List<String> sqlStatements = loadAllSqlStatement(pathAndFileName);
+		for (String statement : sqlStatements) {
+			SqlPojoMemoDB.execute(statement);
+		}
+	}
+
 	/**
 	 * Loads all SQL statements from a text file.
 	 * 
@@ -75,7 +84,7 @@ public class SqlStatementLoader {
 	 * @throws IOException 
 	 */
 	public static final List<String> loadAllSqlStatement(final String pathAndFileName) 
-			                                       throws IOException
+			                                       		 throws IOException
 	{
 		final List<String> toReturn = new ArrayList<String>();
 		final File file = new File(pathAndFileName);

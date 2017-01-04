@@ -1,0 +1,12 @@
+1. Increase version strings:
+   - SqlPojoDatabaseMetaData.java
+   - readme.md
+   - Preparation Steps wiki page (2 times)
+
+2. Maven clean and package project.
+
+3. Copy jar file from target in root dir, remove the -SNAPSHOT and delete the old jar file.
+
+4. Add, commit, tag and push.
+
+5. In GitHub, create new realease.

@@ -15,8 +15,10 @@
  */
 package com.iksgmbh.sql.pojomemodb.dataobjects.persistent.oracle;
 
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.DUAL;
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.NEXTVAL;
+import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.Table;
+import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.Sequence;
+import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.OrderCondition;
+import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.WhereCondition;
 
 import java.math.BigDecimal;
 import java.sql.SQLDataException;
@@ -24,9 +26,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.Sequence;
-import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.Table;
-import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.WhereCondition;
+import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.DUAL;
+import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.NEXTVAL;
 
 public class DualTable extends Table {
 
@@ -40,9 +41,13 @@ public class DualTable extends Table {
 	}
 	
 	@Override
-	public List<Object[]> select(final List<String> selectedColumns, 
-			                     final List<WhereCondition> whereConditions) throws SQLDataException 
+	public List<Object[]> select(final List<String> selectedColumns,
+								 final List<WhereCondition> whereConditions, List<OrderCondition> orderConditions) throws SQLDataException
 	{
+		if (selectedColumns.size() == 0) {
+			return new ArrayList<Object[]>();
+		}
+
 		if (selectedColumns.get(0).toLowerCase().endsWith(DOT_NEXTVAL.toLowerCase())) 
 		{
 			final int pos = selectedColumns.get(0).indexOf(DOT_NEXTVAL);

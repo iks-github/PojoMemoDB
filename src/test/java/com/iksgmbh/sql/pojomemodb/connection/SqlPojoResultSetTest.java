@@ -15,25 +15,37 @@
  */
 package com.iksgmbh.sql.pojomemodb.connection;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-import java.math.BigDecimal;
-import java.sql.Date;
-import java.util.ArrayList;
-import java.util.List;
-
+import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.Table;
+import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.SelectionTable;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
+import java.math.BigDecimal;
+import java.sql.Date;
+import java.sql.SQLDataException;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.Assert.*;
+
 public class SqlPojoResultSetTest 
-{	
+{
+
+    private SqlPojoResultSet createCut(final List<Object[]> dataRows) throws SQLDataException
+    {
+        final Table table = new Table("TestTable");
+        final SelectionTable selectionTable = new SelectionTable(table, new ArrayList<String>());
+        selectionTable.setDataRows(dataRows);
+        return new SqlPojoResultSet(selectionTable);
+    }
+
+
 	@Test
 	public void returnsFalseOnNextForNullResult() throws Exception 
 	{
-		// arrange
-		final SqlPojoResultSet cut = new SqlPojoResultSet(null);
+        // arrange
+        final List<Object[]> list = new ArrayList<Object[]>();
+        final SqlPojoResultSet cut = createCut(list);
 
 		// act
 		boolean next = cut.next();
@@ -47,11 +59,11 @@ public class SqlPojoResultSetTest
 	@Test
 	public void returnsFalseOnNextForEmptyResult() throws Exception 
 	{
-		// arrange
-		final List<Object[]> list = new ArrayList<Object[]>();
-		final SqlPojoResultSet cut = new SqlPojoResultSet(list);
+        // arrange
+        final List<Object[]> list = new ArrayList<Object[]>();
+        final SqlPojoResultSet cut = createCut(list);
 
-		// act
+        // act
 		boolean next = cut.next();
 		cut.close();
 		
@@ -67,9 +79,10 @@ public class SqlPojoResultSetTest
 		final List<Object[]> list = new ArrayList<Object[]>();
 		final Object[] dataset = new Object[1];
 		list.add(dataset);
-		final SqlPojoResultSet cut = new SqlPojoResultSet(list);
+        final SqlPojoResultSet cut = createCut(list);
 
-		// act
+
+        // act
 		boolean next = cut.next();
 		cut.close();
 		
@@ -88,7 +101,7 @@ public class SqlPojoResultSetTest
 		list.add(dataset2);
 		final Object[] dataset3 = new Object[1];
 		list.add(dataset3);
-		final SqlPojoResultSet cut = new SqlPojoResultSet(list);
+        final SqlPojoResultSet cut = createCut(list);
 
 		// act
 		boolean next1 = cut.next();
@@ -118,7 +131,7 @@ public class SqlPojoResultSetTest
 		final Object[] dataset3 = new Object[1];
 		dataset3[0] = "test";
 		list.add(dataset3);
-		final SqlPojoResultSet cut = new SqlPojoResultSet(list);
+        final SqlPojoResultSet cut = createCut(list);
 
 		// act
 		cut.next();

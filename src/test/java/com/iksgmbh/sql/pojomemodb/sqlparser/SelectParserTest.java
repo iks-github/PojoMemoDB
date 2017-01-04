@@ -15,19 +15,19 @@
  */
 package com.iksgmbh.sql.pojomemodb.sqlparser;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import com.iksgmbh.sql.pojomemodb.SQLKeyWords;
+import com.iksgmbh.sql.pojomemodb.SqlExecutor.ParsedSelectData;
+import org.junit.Test;
 
 import java.sql.SQLException;
 
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
-import com.iksgmbh.sql.pojomemodb.SqlExecutor.ParsedSelectData;
 
-
-public class SqlPojoSelectParserTest 
+public class SelectParserTest
 {	
-	private SqlPojoSelectParser sut = new SqlPojoSelectParser(null);
+	private SelectParser sut = new SelectParser(null);
 
 	@Test
 	public void parsesSelectStatementWithTableNameInFrontOfColumnNames() throws SQLException 
@@ -188,7 +188,7 @@ public class SqlPojoSelectParserTest
 			fail("Expected exception was not thrown!");
 		} catch (Exception e) {
 			// assert
-			assertEquals("Error message", "Unkown column id <T3.Name> detected.", e.getMessage());
+			assertEquals("Error message", "Unknown column id <T3.Name> detected.", e.getMessage());
 		}
 	}
 
@@ -204,7 +204,7 @@ public class SqlPojoSelectParserTest
 			fail("Expected exception was not thrown!");
 		} catch (Exception e) {
 			// assert
-			assertEquals("Error message", "Unkown column id <T3.ID> detected.", e.getMessage());
+			assertEquals("Error message", "Unknown column id <T3.ID> detected.", e.getMessage());
 		}
 	}
 
@@ -291,6 +291,56 @@ public class SqlPojoSelectParserTest
 		assertEquals("where condition column name", "TEST_TABLE_NAME_3.ID", result.whereConditions.get(1).getColumnName());
 		assertEquals("where condition value", "TEST_TABLE_NAME_2.ID", result.whereConditions.get(1).getValueAsString());
 	}
-	
+
+	@Test
+	public void parsesSelectStatementWithOrderBy() throws SQLException
+	{
+		// arrange
+		final String selectStatement = "select TEST_TABLE_NAME.ID, TEST_TABLE_NAME.TYPE " +
+				"from TEST_TABLE_NAME order by TEST_TABLE_NAME.ID";
+
+		// act
+		final ParsedSelectData result = sut.parseSelectSql(selectStatement);
+
+		// assert
+		assertEquals("tableName", "TEST_TABLE_NAME", result.tableNames.get(0));
+		assertEquals("# selected columns", 2, result.selectedColumns.size());
+		assertEquals("first column name", "ID", result.selectedColumns.get(0));
+		assertEquals("order direction", SQLKeyWords.ASC, result.orderConditions.get(0).getDirection());
+	}
+
+	@Test
+	public void parsesSelectStatementWithOrderBy_asc_desc() throws SQLException
+	{
+		// arrange
+		final String selectStatement = "select TEST_TABLE_NAME.ID, TEST_TABLE_NAME.TYPE " +
+				"from TEST_TABLE_NAME order by TEST_TABLE_NAME.ID ASC, TEST_TABLE_NAME.TYPE desc";
+
+		// act
+		final ParsedSelectData result = sut.parseSelectSql(selectStatement);
+
+		// assert
+		assertEquals("order column name 1", "TEST_TABLE_NAME.ID", result.orderConditions.get(0).getColumnName());
+		assertEquals("order column name 2", "TEST_TABLE_NAME.TYPE", result.orderConditions.get(1).getColumnName());
+		assertEquals("order direction 1", SQLKeyWords.ASC, result.orderConditions.get(0).getDirection());
+		assertEquals("order direction 2", SQLKeyWords.DESC, result.orderConditions.get(1).getDirection());
+	}
+
+	@Test
+	public void throwsExceptionForMissingOrderColumn() throws SQLException
+	{
+		// arrange
+		final String selectStatement = "select TEST_TABLE_NAME.ID, TEST_TABLE_NAME.TYPE from TEST_TABLE_NAME order by";
+
+
+		try{
+			// act
+			sut.parseSelectSql(selectStatement);
+			fail("Expected exception was not thrown!");
+		} catch (Exception e){
+			// assert
+			assertEquals("Error message", "No column defined for order by!", e.getMessage());
+		}
+	}
 
 }

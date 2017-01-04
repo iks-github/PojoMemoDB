@@ -15,15 +15,6 @@
  */
 package com.iksgmbh.sql.pojomemodb.dataobjects.persistent;
 
-import java.sql.SQLDataException;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.iksgmbh.sql.pojomemodb.DbProperties;
 import com.iksgmbh.sql.pojomemodb.SQLKeyWords;
 import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.data.SequenceData;
@@ -34,6 +25,11 @@ import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.metadata.TableStoreMeta
 import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.statistics.TableStatistics;
 import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.statistics.TableStoreStatistics;
 import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.oracle.DualTable;
+
+import java.sql.SQLDataException;
+import java.sql.SQLException;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Container for all data in the MemoryDB.
@@ -69,13 +65,14 @@ public class TableStore implements TableStoreStatistics, TableStoreMetaData, Tab
 		systemTableMap = new HashMap<String, Table>();
 		sequenceMap = new HashMap<String, Sequence>();
 		
-		if (DbProperties.USE_ORACLE_DUAL_TABLE) {
-			initDualTable();
-		}
+		initDualTableIfNeeded();
 	}
 	
-	private void initDualTable() {
-		systemTableMap.put(SQLKeyWords.DUAL, new DualTable(sequenceMap) );
+	private void initDualTableIfNeeded()
+	{
+		if (DbProperties.USE_ORACLE_DUAL_TABLE) {
+			systemTableMap.put(SQLKeyWords.DUAL, new DualTable(sequenceMap) );
+		}
 	}
 
 	// #########################################################################################
@@ -152,7 +149,8 @@ public class TableStore implements TableStoreStatistics, TableStoreMetaData, Tab
 	@Override
 	public void dropAllTables() {
 		userTableMap.clear();
-		initDualTable();
+		systemTableMap.clear();
+		initDualTableIfNeeded();
 	}
 	
 	@Override

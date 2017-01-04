@@ -15,23 +15,24 @@
  */
 package com.iksgmbh.sql.pojomemodb;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import com.iksgmbh.sql.pojomemodb.SqlExecutor.ParsedInsertData;
+import com.iksgmbh.sql.pojomemodb.SqlExecutor.ParsedSelectData;
+import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.metadata.TableMetaData;
+import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.Table;
+import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.ColumnInitData;
+import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.JoinTable;
+import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.OrderCondition;
+import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.WhereCondition;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.sql.SQLDataException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
-
-import com.iksgmbh.sql.pojomemodb.SqlExecutor.ParsedInsertData;
-import com.iksgmbh.sql.pojomemodb.SqlExecutor.ParsedSelectData;
-import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.metadata.TableMetaData;
-import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.Table;
-import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.JoinTable;
-import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.WhereCondition;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class SqlExecutorTest {
 
@@ -80,13 +81,13 @@ public class SqlExecutorTest {
 		final List<WhereCondition> joinConditions = new ArrayList<WhereCondition>();
 		joinConditions.add(new WhereCondition("T1.C1", SQLKeyWords.COMPARATOR_EQUAL, "T2.C2"));
 		joinConditions.add(new WhereCondition("T3.C3", SQLKeyWords.COMPARATOR_EQUAL, "T4.C4")); // the bridge between these joinCondition is missing !
-		final ParsedSelectData selectData = new ParsedSelectData(tableNames, columnNames, joinConditions);
+		final ParsedSelectData selectData = new ParsedSelectData(tableNames, columnNames, joinConditions, new ArrayList<OrderCondition>());
 		
 		TableMetaData table = new Table("T1");
-		table.createNewColumn("C1", "Number(5)", true, null);
+        table.createNewColumn(createColumnInitData("C1", "Number(5)"), null);
 		db.getTableStoreMetaData().addTable(table);
 		table = new Table("T2");
-		table.createNewColumn("C2", "Number(5)", true, null);
+        table.createNewColumn(createColumnInitData("C2", "Number(5)"), null);
 		db.getTableStoreMetaData().addTable(table);
 		
 		try {
@@ -114,19 +115,19 @@ public class SqlExecutorTest {
 		final List<WhereCondition> joinConditions = new ArrayList<WhereCondition>();
 		joinConditions.add(new WhereCondition("T1.C1", SQLKeyWords.COMPARATOR_EQUAL, "T2.C2"));
 		joinConditions.add(new WhereCondition("T2.C2", SQLKeyWords.COMPARATOR_EQUAL, "T3.C3"));
-		final ParsedSelectData selectData = new ParsedSelectData(tableNames, columnNames, joinConditions);
+		final ParsedSelectData selectData = new ParsedSelectData(tableNames, columnNames, joinConditions, new ArrayList<OrderCondition>());
 		
 		TableMetaData table = new Table("T1");
-		table.createNewColumn("C1", "Number(5)", true, null);
-		table.createNewColumn("C2", "Number(5)", true, null);
+        table.createNewColumn(createColumnInitData("C1", "Number(5)"), null);
+        table.createNewColumn(createColumnInitData("C2", "Number(5)"), null);
 		db.getTableStoreMetaData().addTable(table);
 		table = new Table("T2");
-		table.createNewColumn("C1", "Number(5)", true, null);
-		table.createNewColumn("C2", "Number(5)", true, null);
+        table.createNewColumn(createColumnInitData("C1", "Number(5)"), null);
+        table.createNewColumn(createColumnInitData("C2", "Number(5)"), null);
 		db.getTableStoreMetaData().addTable(table);
 		table = new Table("T3");
-		table.createNewColumn("C1", "Number(5)", true, null);
-		table.createNewColumn("C2", "Number(5)", true, null);
+		table.createNewColumn(createColumnInitData("C1", "Number(5)"), null);
+        table.createNewColumn(createColumnInitData("C2", "Number(5)"), null);
 		db.getTableStoreMetaData().addTable(table);
 		
 		// act			
@@ -141,5 +142,10 @@ public class SqlExecutorTest {
 		assertEquals("column name", "T3.C1", namesOfColumns.get(4));
 		assertEquals("column name", "T3.C2", namesOfColumns.get(5));
  	}	
-	
+
+    private ColumnInitData createColumnInitData(String colName, String colType) {
+        ColumnInitData toReturn = new ColumnInitData(colName);
+        toReturn.columnType = colType;
+        return toReturn;
+    }
 }

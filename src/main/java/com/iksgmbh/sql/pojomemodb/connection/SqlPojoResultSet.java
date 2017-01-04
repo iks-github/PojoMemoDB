@@ -15,30 +15,17 @@
  */
 package com.iksgmbh.sql.pojomemodb.connection;
 
+import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.SelectionTable;
+import org.joda.time.DateTime;
+
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.net.URL;
-import java.sql.Array;
-import java.sql.Blob;
-import java.sql.Clob;
-import java.sql.Date;
-import java.sql.NClob;
-import java.sql.Ref;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.RowId;
-import java.sql.SQLException;
-import java.sql.SQLWarning;
-import java.sql.SQLXML;
-import java.sql.Statement;
-import java.sql.Time;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
-
-import org.joda.time.DateTime;
 
 /**
  * This class represents an incomplete implementation of java.sql.ResultSet class.
@@ -49,16 +36,20 @@ import org.joda.time.DateTime;
 @SuppressWarnings("unused")
 public class SqlPojoResultSet implements ResultSet 
 {
-	private List<Object[]> result;
-	private int resultCursorPosition = -1;
+    private SelectionTable selectionTable;
+    private final List<Object[]> selectedData;
+    private int resultCursorPosition = -1;
 	private int maximumIndex;
 
-	public SqlPojoResultSet(List<Object[]> result) {
-		this.result = result;
-		if (result == null) {
+	public SqlPojoResultSet(final SelectionTable aSelectionTable)
+    {
+		this.selectionTable = aSelectionTable;
+        this.selectedData = aSelectionTable.getDataRows();
+
+		if (aSelectionTable == null) {
 			maximumIndex = -1;
 		} else {
-			maximumIndex = result.size() - 1;
+			maximumIndex = selectionTable.getNumberOfRows() - 1;
 		}
 	}
 
@@ -66,7 +57,7 @@ public class SqlPojoResultSet implements ResultSet
 	@Override
 	public boolean next() throws SQLException 
 	{
-		boolean toReturn = (result != null && result.size() > 0 && resultCursorPosition < maximumIndex);
+        boolean toReturn = (selectedData != null && selectedData.size() > 0 && resultCursorPosition < maximumIndex);
 		resultCursorPosition++;
 		return toReturn;
 	}
@@ -79,9 +70,9 @@ public class SqlPojoResultSet implements ResultSet
 
 
 	@Override
-	public long getLong(int columnIndex) throws SQLException {
+	public long getLong(int columnOrderNumber) throws SQLException {
 		try {
-			final BigDecimal decimal = (BigDecimal) result.get(resultCursorPosition)[columnIndex-1];
+			final BigDecimal decimal = (BigDecimal) selectedData.get(resultCursorPosition)[columnOrderNumber-1];
 			if (decimal == null) {
 				throw new NullPointerException("null value in db cannot be parsed into an int value.");
 			}
@@ -93,15 +84,15 @@ public class SqlPojoResultSet implements ResultSet
 	}
 	
 	@Override
-	public int getInt(int columnIndex) throws SQLException {
-		return (int) getLong(columnIndex);
+	public int getInt(int columnOrderNumber) throws SQLException {
+		return (int) getLong(columnOrderNumber);
 	}
 
 
 	@Override
-	public String getString(int columnIndex) throws SQLException {
+	public String getString(int columnOrderNumber) throws SQLException {
 		try {
-			return (String) result.get(resultCursorPosition)[columnIndex-1];
+			return (String) selectedData.get(resultCursorPosition)[columnOrderNumber-1];
 		} catch (ClassCastException e) {
 			throwsTypeMismatchException(e);
 			return null;
@@ -109,9 +100,9 @@ public class SqlPojoResultSet implements ResultSet
 	}
 	
 	@Override
-	public Date getDate(int columnIndex) throws SQLException {
+	public Date getDate(int columnOrderNumber) throws SQLException {
 		try {
-			final DateTime dateTime = (DateTime) result.get(resultCursorPosition)[columnIndex-1];
+			final DateTime dateTime = (DateTime) selectedData.get(resultCursorPosition)[columnOrderNumber-1];
 			if (dateTime == null) {
 				throw new NullPointerException("null value in db cannot be parsed into an Date value.");
 			}
@@ -121,13 +112,89 @@ public class SqlPojoResultSet implements ResultSet
 			return null;
 		}
 	}
+
+    @Override
+    public Time getTime(int columnOrderNumber) throws SQLException {
+        try {
+            final DateTime dateTime = (DateTime) selectedData.get(resultCursorPosition)[columnOrderNumber-1];
+            if (dateTime == null) {
+                throw new NullPointerException("null value in db cannot be parsed into an Date value.");
+            }
+            return new java.sql.Time(dateTime.getMillis());
+        } catch (ClassCastException e) {
+            throwsTypeMismatchException(e);
+            return null;
+        }
+    }
+
+    @Override
+    public Timestamp getTimestamp(int columnOrderNumber) throws SQLException {
+        try {
+            final DateTime dateTime = (DateTime) selectedData.get(resultCursorPosition)[columnOrderNumber-1];
+            if (dateTime == null) {
+                throw new NullPointerException("null value in db cannot be parsed into an Date value.");
+            }
+            return new java.sql.Timestamp(dateTime.getMillis());
+        } catch (ClassCastException e) {
+            throwsTypeMismatchException(e);
+            return null;
+        }
+    }
 	
 	private void throwsTypeMismatchException(final ClassCastException e) throws SQLException {
 		throw new SQLException("Wrong data type while accessing data in the result set.", e);
 	}
-	
-	
-	// ###########################################################################
+
+
+    @Override
+    public ResultSetMetaData getMetaData() throws SQLException {
+
+        return new SqlPojoResultSetMetaData(selectionTable);
+    }
+
+    @Override
+    public Object getObject(int columnOrderNumber) throws SQLException
+    {
+        String columnName = selectionTable.getNamesOfColumns().get(columnOrderNumber - 1);
+        String columnType = selectionTable.getTypeOfColumn(columnName);
+
+        if ( "TIMESTAMP".equals(columnType) ) {
+            return getTimestamp(columnOrderNumber);
+        }
+
+        if ( "DATE".equals(columnType) ) {
+            return getDate(columnOrderNumber);
+        }
+
+        if ( "TIME".equals(columnType) ) {
+            return getTime(columnOrderNumber);
+        }
+
+        return selectedData.get(resultCursorPosition)[columnOrderNumber - 1];
+    }
+
+    @Override
+    public Object getObject(String columnLabel) throws SQLException {
+        int columnOrderNumber = findColumn(columnLabel);
+        return getObject(columnOrderNumber);
+    }
+
+    @Override
+    public int findColumn(String columnLabel) throws SQLException {
+        List<String> namesOfColumns = selectionTable.getNamesOfColumns();
+        int columnOrderNumber = 1;
+        for (String columnName : namesOfColumns)  {
+            if (columnLabel.equals(columnName))  {
+                return columnOrderNumber;
+            }
+            columnOrderNumber++;
+        }
+
+        return -1;
+    }
+
+
+    // ###########################################################################
 	//                 not   implemented    dummy    methods
 	// ###########################################################################
 
@@ -190,18 +257,6 @@ public class SqlPojoResultSet implements ResultSet
 
 	@Override
 	public byte[] getBytes(int columnIndex) throws SQLException {
-		if (true) throw new RuntimeException("Not yet implemented!");
-		return null;
-	}
-
-	@Override
-	public Time getTime(int columnIndex) throws SQLException {
-		if (true) throw new RuntimeException("Not yet implemented!");
-		return null;
-	}
-
-	@Override
-	public Timestamp getTimestamp(int columnIndex) throws SQLException {
 		if (true) throw new RuntimeException("Not yet implemented!");
 		return null;
 	}
@@ -336,30 +391,6 @@ public class SqlPojoResultSet implements ResultSet
 	public String getCursorName() throws SQLException {
 		if (true) throw new RuntimeException("Not yet implemented!");
 		return null;
-	}
-
-	@Override
-	public ResultSetMetaData getMetaData() throws SQLException {
-		if (true) throw new RuntimeException("Not yet implemented!");
-		return null;
-	}
-
-	@Override
-	public Object getObject(int columnIndex) throws SQLException {
-		if (true) throw new RuntimeException("Not yet implemented!");
-		return null;
-	}
-
-	@Override
-	public Object getObject(String columnLabel) throws SQLException {
-		if (true) throw new RuntimeException("Not yet implemented!");
-		return null;
-	}
-
-	@Override
-	public int findColumn(String columnLabel) throws SQLException {
-		if (true) throw new RuntimeException("Not yet implemented!");
-		return 0;
 	}
 
 	@Override
@@ -1233,14 +1264,14 @@ public class SqlPojoResultSet implements ResultSet
 	}
 
 
-	@Override
+    // @Override not before Java 1.7
 	public <T> T getObject(int arg0, Class<T> arg1) throws SQLException {
 		if (true) throw new RuntimeException("Not yet implemented!");
 		return null;
 	}
 
 
-	@Override
+    // @Override not before Java 1.7
 	public <T> T getObject(String arg0, Class<T> arg1) throws SQLException {
 		if (true) throw new RuntimeException("Not yet implemented!");
 		return null;

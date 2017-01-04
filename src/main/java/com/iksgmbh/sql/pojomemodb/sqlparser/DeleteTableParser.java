@@ -15,13 +15,6 @@
  */
 package com.iksgmbh.sql.pojomemodb.sqlparser;
 
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.FROM;
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.WHERE;
-import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.parseNextValue;
-
-import java.sql.SQLException;
-import java.util.List;
-
 import com.iksgmbh.sql.pojomemodb.SQLKeyWords;
 import com.iksgmbh.sql.pojomemodb.SqlExecutor.ParsedDeleteData;
 import com.iksgmbh.sql.pojomemodb.SqlPojoMemoDB;
@@ -29,9 +22,16 @@ import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.WhereCondition;
 import com.iksgmbh.sql.pojomemodb.sqlparser.helper.WhereConditionParser;
 import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.InterimParseResult;
 
-public class SqlPojoDeleteParser extends AbstractSqlPojoMemoryParser
+import java.sql.SQLException;
+import java.util.List;
+
+import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.FROM;
+import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.WHERE;
+import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.parseNextValue;
+
+public class DeleteTableParser extends SqlPojoMemoParser
 {	
-	public SqlPojoDeleteParser(final SqlPojoMemoDB memoryDb)  {
+	public DeleteTableParser(final SqlPojoMemoDB memoryDb)  {
 		this.memoryDb = memoryDb;
 	}
 

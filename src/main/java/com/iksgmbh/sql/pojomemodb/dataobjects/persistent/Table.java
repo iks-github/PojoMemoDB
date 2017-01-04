@@ -15,7 +15,24 @@
  */
 package com.iksgmbh.sql.pojomemodb.dataobjects.persistent;
 
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.TO_CHAR;
+import com.iksgmbh.sql.pojomemodb.SQLKeyWords;
+import com.iksgmbh.sql.pojomemodb.SqlPojoMemoDB;
+import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.data.ColumnData;
+import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.data.TableData;
+import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.metadata.TableMetaData;
+import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.statistics.ColumnStatistics;
+import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.statistics.TableStatistics;
+import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.ApartValue;
+import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.ColumnInitData;
+import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.OrderCondition;
+import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.WhereCondition;
+import com.iksgmbh.sql.pojomemodb.validator.ConstraintValidator;
+import com.iksgmbh.sql.pojomemodb.validator.TypeValidator;
+import com.iksgmbh.sql.pojomemodb.validator.TypeValidator.ValidatorType;
+import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil;
+import org.joda.time.DateTime;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+
 import java.math.BigDecimal;
 import java.sql.SQLDataException;
 import java.text.SimpleDateFormat;
@@ -24,18 +41,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
-import org.joda.time.DateTime;
-
-import com.iksgmbh.sql.pojomemodb.SqlPojoMemoDB;
-import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.data.ColumnData;
-import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.data.TableData;
-import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.metadata.TableMetaData;
-import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.statistics.ColumnStatistics;
-import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.statistics.TableStatistics;
-import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.ApartValue;
-import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.WhereCondition;
-import com.iksgmbh.sql.pojomemodb.dataobjects.validator.Validator.ValidatorType;
-import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil;
+import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.TO_CHAR;
 
 /**
  * Table implementation of the PojoMemoryDB. 
@@ -131,14 +137,12 @@ public class Table implements TableStatistics, TableMetaData, TableData
 	
 	
 	@Override
-	public void createNewColumn(final String columnName, 
-			                    final String columnType, 
-			                    final boolean nullable,        
-			                    final SqlPojoMemoDB memoryDB) throws SQLDataException  
+	public void createNewColumn(final ColumnInitData columnInitData,
+                                final SqlPojoMemoDB memoryDB) throws SQLDataException
 	{
-		final String upperCaseColumnName = columnName.toUpperCase();
+		final String upperCaseColumnName = columnInitData.columnName.toUpperCase();
 		final int orderNumber = getNumberOfColumns() + 1;
-		final Column column = new Column(upperCaseColumnName, columnType, nullable, orderNumber, memoryDB);
+		final Column column = new Column(columnInitData, orderNumber, memoryDB);
 		columnMap.put(upperCaseColumnName, column);
 		sortedColumnNames.add(upperCaseColumnName);
 	}
@@ -162,9 +166,10 @@ public class Table implements TableStatistics, TableMetaData, TableData
 			}
 		}
 
-		checkForNullValues(newDataRow, exceptionList);
+        exceptionList.addAll( ConstraintValidator.validateNullConstraints(newDataRow, sortedColumnNames, columnMap) );
+        exceptionList.addAll( ConstraintValidator.validatePrimaryKeyConstraints(dataRows, newDataRow, sortedColumnNames, columnMap) );
 
-		if ( ! exceptionList.isEmpty() ) 
+        if ( ! exceptionList.isEmpty() )
 		{
 			final StringBuilder  sb = new StringBuilder ();
 			
@@ -185,13 +190,66 @@ public class Table implements TableStatistics, TableMetaData, TableData
 	}
 
 	@Override
-	public List<Object[]> select(final List<String> selectedColumns, 
-			                     final List<WhereCondition> whereConditions) throws SQLDataException 
+	public List<Object[]> select(final List<String> selectedColumns,
+								 final List<WhereCondition> whereConditions,
+								 final List<OrderCondition> orderConditions) throws SQLDataException
 	{
 		final List<Object[]> tableData = createDataRowsClone();
 		applySqlFunctions(tableData, selectedColumns);
-		final List<Object[]> selectedDataRows = selectDataRows(whereConditions, tableData).selectedRows;
+		List<Object[]> selectedDataRows = selectDataRows(whereConditions, tableData).selectedRows;
+		selectedDataRows = orderBy(selectedDataRows, orderConditions);
 		return removeUnselectedColumns(selectedDataRows, selectedColumns);
+	}
+
+	private List<Object[]> orderBy(final List<Object[]> selectedTableData,
+								   final List<OrderCondition> orderConditions) throws SQLDataException
+	{
+		if (orderConditions.size() == 0) {
+			return selectedTableData;
+		}
+
+		if (orderConditions.size() > 1) {
+			throw new NotImplementedException();
+		}
+
+		final String columnName = orderConditions.get(0).getColumnName();
+		final Column column = getColumn(columnName);
+		final String direction = orderConditions.get(0).getDirection();
+
+		return orderBy(selectedTableData, column, direction);
+	}
+
+	private List<Object[]> orderBy(List<Object[]> inputData, Column column, String direction) throws SQLDataException
+	{
+		final List<Object[]> toReturn = new ArrayList<Object[]>();  // objectArray is sorted by Column.orderNumber
+		final int orderColumnIndex = column.getIndexInTable();
+		final TypeValidator typeValidator = column.getTypeValidator();
+
+		while (inputData.size() > 0)
+		{
+			Object[] orderedRow = inputData.get(0);
+			for (Object[] dataRow : inputData) {
+				if (isDataRowGreaterOrLess(typeValidator, orderedRow[orderColumnIndex], dataRow[orderColumnIndex], direction)) {
+					orderedRow = dataRow;
+				}
+			}
+			toReturn.add(orderedRow);
+			inputData.remove(orderedRow);
+		}
+
+		return toReturn;
+	}
+
+	private boolean isDataRowGreaterOrLess(TypeValidator typeValidator, Object value1, Object value2, String direction) throws SQLDataException
+	{
+		Boolean result = typeValidator.isValue1SmallerThanValue2(value1, value2);
+		if (result == null) return false;
+
+		if (SQLKeyWords.ASC.equals(direction)) {
+			return ! result;
+		} else {  // DESC
+			return result;
+		}
 	}
 
 	@Override
@@ -341,23 +399,7 @@ public class Table implements TableStatistics, TableMetaData, TableData
 		return selectedDataRows;
 	}
 
-	private void checkForNullValues(final Object[] newDataRow, 
-			                        final List<SQLDataException> exceptionList)
-	{
-		final List<String> namesOfColumns = getNamesOfColumns();
-		for (String columnName : namesOfColumns) 
-		{
-			Column column = columnMap.get(columnName);
-			boolean nullable = column.isNullable();
-			int index = column.getOrderNumber() - 1;
-			
-			if (! nullable && newDataRow[index] == null) {
-				exceptionList.add(new SQLDataException("Null value not allowed for column '" + columnName + "'."));
-			}
-		}
-	}
-	
-	private void integrateValue(final ApartValue apartValue, 
+	private void integrateValue(final ApartValue apartValue,
 			                    final Object[] newDataRow) throws SQLDataException 
 	{
 		final ColumnData column = getColumn(apartValue.getColumnName()); 

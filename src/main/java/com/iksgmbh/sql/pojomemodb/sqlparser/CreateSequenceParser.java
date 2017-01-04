@@ -15,18 +15,18 @@
  */
 package com.iksgmbh.sql.pojomemodb.sqlparser;
 
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.START_WITH;
-import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.SPACE;
-
-import java.sql.SQLException;
-
 import com.iksgmbh.sql.pojomemodb.SQLKeyWords;
 import com.iksgmbh.sql.pojomemodb.SqlExecutor.ParsedSequenceData;
 import com.iksgmbh.sql.pojomemodb.SqlPojoMemoDB;
 
-public class SqlPojoCreateSequenceParser extends AbstractSqlPojoMemoryParser 
+import java.sql.SQLException;
+
+import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.START_WITH;
+import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.SPACE;
+
+public class CreateSequenceParser extends SqlPojoMemoParser
 {
-	public SqlPojoCreateSequenceParser(final SqlPojoMemoDB memoryDb)  {
+	public CreateSequenceParser(final SqlPojoMemoDB memoryDb)  {
 		this.memoryDb = memoryDb;
 	}
 	

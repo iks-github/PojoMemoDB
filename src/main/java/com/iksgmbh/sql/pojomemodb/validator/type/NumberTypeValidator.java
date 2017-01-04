@@ -13,37 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.iksgmbh.sql.pojomemodb.dataobjects.validator;
+package com.iksgmbh.sql.pojomemodb.validator.type;
+
+import com.iksgmbh.sql.pojomemodb.validator.TypeValidator;
 
 import java.math.BigDecimal;
 import java.sql.SQLDataException;
 
-public class NumberValidator extends Validator 
+public class NumberTypeValidator extends TypeValidator
 {
 	private static final ValidatorType VALIDATION_TYPE = ValidatorType.NUMBER;
 	
 	int maxLength;
 	int numberDecimalPlaces; 
 	
-	public NumberValidator(final String columnType) throws SQLDataException 
+	public NumberTypeValidator(final String columnType) throws SQLDataException
 	{
 		try {
-			this.maxLength = parseNextIntegerFromString(columnType);
+			this.maxLength = parseMaxLengthFromString(columnType);
 		} catch (IllegalArgumentException e) {
 			// practically accept all numbers
 			this.maxLength = 1000;
 			this.numberDecimalPlaces = 1000; 
 		}
-		
-		final int pos = columnType.indexOf(maxLength) + ("" + maxLength).length();
-		final String unparsedRest = columnType.substring(pos);
-		
-		try {
-			this.numberDecimalPlaces = parseNextIntegerFromString(unparsedRest);
-		} catch (IllegalArgumentException e) {
-			// accept no decimal places
-			this.numberDecimalPlaces = 0; 
-		}
+
+        try {
+            this.numberDecimalPlaces = parseDecimalPlacesFromString(columnType);
+        } catch (IllegalArgumentException e) {
+            this.numberDecimalPlaces = 0;
+        }
 	}
 
 
@@ -55,8 +53,16 @@ public class NumberValidator extends Validator
 	}
 
 	@Override
-	public void validate(Object value) throws SQLDataException {
-	}
+	public void validateValueForType(Object value) throws SQLDataException
+    {
+        if (value == null) return; // nullable is not checked here
+
+        try {
+            convertIntoColumnType( "" + value );
+        } catch (SQLDataException e) {
+            throw new SQLDataException("Value '" + value + "' is not valid");
+        }
+    }
 
 	@Override
 	public ValidatorType getType() {
@@ -71,5 +77,21 @@ public class NumberValidator extends Validator
 		} catch (NumberFormatException e) {
 			throw new SQLDataException("Insert values '" + valueAsString + "' is no number.");
 		}
+	}
+
+	@Override
+	public Boolean isValue1SmallerThanValue2(Object value1, Object value2) throws SQLDataException
+	{
+		if (value1 == null || value2 == null)
+			return isValue1SmallerThanValue2ForNullvalues(value1, value2);
+
+		final BigDecimal number1 = (BigDecimal) value1;
+		final BigDecimal number2 = (BigDecimal) value2;
+
+		int result = number1.compareTo(number2);
+
+		if (result == 0) return null;
+
+		return result == -1;
 	}
 }

@@ -15,22 +15,20 @@
  */
 package com.iksgmbh.sql.pojomemodb.sqlparser;
 
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.VALUES;
-import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.CLOSING_PARENTHESIS;
-import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.OPENING_PARENTHESIS;
-import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.parseNextValue;
+import com.iksgmbh.sql.pojomemodb.SQLKeyWords;
+import com.iksgmbh.sql.pojomemodb.SqlExecutor.ParsedInsertData;
+import com.iksgmbh.sql.pojomemodb.SqlPojoMemoDB;
+import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.*;
 
 import java.sql.SQLException;
 import java.util.List;
 
-import com.iksgmbh.sql.pojomemodb.SQLKeyWords;
-import com.iksgmbh.sql.pojomemodb.SqlExecutor.ParsedInsertData;
-import com.iksgmbh.sql.pojomemodb.SqlPojoMemoDB;
-import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.InterimParseResult;
+import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.VALUES;
+import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.*;
 
-public class SqlPojoInsertIntoParser extends AbstractSqlPojoMemoryParser
+public class InsertIntoParser extends SqlPojoMemoParser
 {	
-	public SqlPojoInsertIntoParser(final SqlPojoMemoDB memoryDb)  {
+	public InsertIntoParser(final SqlPojoMemoDB memoryDb)  {
 		this.memoryDb = memoryDb;
 	}
 	

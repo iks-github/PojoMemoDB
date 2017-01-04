@@ -15,22 +15,17 @@
  */
 package com.iksgmbh.sql.pojomemodb.sqlparser;
 
-import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.APOSTROPY;
-import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.CLOSING_PARENTHESIS;
-import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.COMMA;
-import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.OPENING_PARENTHESIS;
-import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.SPACE;
-import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.parseNextValue;
+import com.iksgmbh.sql.pojomemodb.SqlPojoMemoDB;
+import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil;
+import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.*;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.iksgmbh.sql.pojomemodb.SqlPojoMemoDB;
-import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil;
-import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.InterimParseResult;
+import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.*;
 
-public abstract class AbstractSqlPojoMemoryParser 
+public abstract class SqlPojoMemoParser
 {
 	protected SqlPojoMemoDB memoryDb;
 

@@ -13,19 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.iksgmbh.sql.pojomemodb.dataobjects.validator;
+package com.iksgmbh.sql.pojomemodb.validator.type;
+
+import com.iksgmbh.sql.pojomemodb.validator.TypeValidator;
 
 import java.sql.SQLDataException;
 
-public class VarcharValidator extends Validator
+public class VarcharTypeValidator extends TypeValidator
 {
 	private static final ValidatorType VALIDATION_TYPE = ValidatorType.VARCHAR;
 	
 	private int maxLength;
 	
-	public VarcharValidator(final String columnType) throws SQLDataException {
+	public VarcharTypeValidator(final String columnType) throws SQLDataException {
 		try {
-			this.maxLength = parseNextIntegerFromString(columnType);
+			this.maxLength = parseMaxLengthFromString(columnType);
 		} catch (IllegalArgumentException e) {
 			throw new SQLDataException("Invalid column type '" + columnType + "'. Something expected like VARCHAR(50 CHAR).");
 		}
@@ -38,7 +40,8 @@ public class VarcharValidator extends Validator
 	}
 	
 	@Override
-	public void validate(Object value) throws SQLDataException {
+	public void validateValueForType(Object value) throws SQLDataException {
+        // nothing to do here
 	}
 
 	@Override
@@ -56,4 +59,22 @@ public class VarcharValidator extends Validator
 		
 		return valueAsString.substring( 1, valueAsString.length() - 1 );
 	}
+
+	@Override
+	public Boolean isValue1SmallerThanValue2(Object value1, Object value2) throws SQLDataException
+	{
+		if (value1 == null || value2 == null)
+			return isValue1SmallerThanValue2ForNullvalues(value1, value2);
+
+		final String string1 = (String) value1;
+		final String string2 = (String) value2;
+
+		int result = string1.compareTo(string2);
+
+		if (result < 0) return true;
+		if (result > 0) return false;
+
+		return null;
+	}
+
 }

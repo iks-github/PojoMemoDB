@@ -15,11 +15,15 @@
  */
 package com.iksgmbh.sql.pojomemodb;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.statistics.TableStoreStatistics;
+import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.Sequence;
+import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.TableStore;
+import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.SelectionTable;
+import com.iksgmbh.sql.pojomemodb.utils.SqlStatementLoader;
+
+import org.joda.time.DateTime;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -28,14 +32,7 @@ import java.sql.SQLDataException;
 import java.sql.SQLException;
 import java.util.List;
 
-import org.joda.time.DateTime;
-import org.junit.Before;
-import org.junit.Test;
-
-import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.statistics.TableStoreStatistics;
-import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.Sequence;
-import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.TableStore;
-import com.iksgmbh.sql.pojomemodb.testutils.SqlStatementLoader;
+import static org.junit.Assert.*;
 
 public class SqlPojoMemoDBTest {
 	
@@ -84,6 +81,7 @@ public class SqlPojoMemoDBTest {
 	//                      C R E A T E   T A B L E   S T A T E M E N T   T E S T S
 	// #############################################################################################
 
+	
 	@Test
 	public void createsNewVerySimpleTable() throws SQLException 
 	{
@@ -109,8 +107,7 @@ public class SqlPojoMemoDBTest {
 	public void createsNewTable() throws SQLException 
 	{
 		// arrange
-		final String createTableStatement = "create table \"TEST_TABLE_NAME\" (\"ID\" NUMBER(10,0) NOT NULL ENABLE, "
-				                                                      + "NAME VARCHAR(50))";
+		final String createTableStatement = "create table TEST_TABLE_NAME (ID NUMBER(10,0) NOT NULL ENABLE, NAME VARCHAR(50))";
 		
 		// act
 		SqlPojoMemoDB.execute( createTableStatement );
@@ -167,6 +164,42 @@ public class SqlPojoMemoDBTest {
 		assertEquals("type of column", "VARCHAR2(50 CHAR)", dbContent.getTypeOfColumn( tableName , "UPDATED_BY"));
 		assertEquals("type of column", "false", "" + dbContent.isColumnNullable( tableName , "UPDATED_BY"));
 	}
+
+	@Test
+	public void createsNewTable_MySql() throws SQLException, NoSuchFieldException, IllegalAccessException
+    {
+		// arrange
+        SqlPojoMemoDB.reset();
+        DbProperties.SUPPORT_MYSQL = true;
+
+		final String createTableStatement = "CREATE TABLE hersteller (ID int PRIMARY KEY NOT NULL," +
+				                                                      "Bezeichnung varchar(60) NOT NULL," +
+																	  "Code int," +
+																	  "Status int DEFAULT 0 NOT NULL," +
+																	  "AenderungsTimeStamp timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL," +
+																	  "User varchar(60) NOT NULL," +
+																	  "Memo longtext," +
+																	  "LockedBy varchar(100)," +
+																	  "Type int DEFAULT 1 NOT NULL," +
+																	  "Group decimal(10,0) DEFAULT 0 NOT NULL" +
+																	  ");";
+
+		// act
+		final String result = (String) SqlPojoMemoDB.execute( createTableStatement );
+
+		// assert
+		assertEquals("result", "Table HERSTELLER has been created.", result);
+
+		final TableStoreStatistics dbContent = SqlPojoMemoDB.getDbStatistics();
+		assertEquals("number of tables", 1, dbContent.getNumberOfTables());
+		assertEquals("number of rows", 0, dbContent.getNumberOfRows("HERSTELLER"));
+		assertEquals("number of columns", 10, dbContent.getNumberOfColumns("HERSTELLER"));
+		assertEquals("name of column", "ID", dbContent.getNamesOfColumns("HERSTELLER").get(0));
+		assertEquals("type of column", "INT", dbContent.getTypeOfColumn("HERSTELLER", "ID"));
+		assertEquals("type of column", "false", "" + dbContent.isColumnNullable("HERSTELLER", "ID"));
+	}
+	
+	
 	
 	@Test
 	public void throwsExceptionForUnkownColumnTypeIncreateTableStatement() throws SQLException 
@@ -179,7 +212,7 @@ public class SqlPojoMemoDBTest {
 			SqlPojoMemoDB.execute( createTableStatement );
 			fail("Expected exception was not thrown!");
 		} catch (SQLDataException e) {			
-			assertEquals("Error message", "Unknown column type 'UNKOWN_TYPE' for column 'ID'.", e.getMessage());
+			assertEquals("Error message", "Unknown column type 'UNKOWN_TYPE'. Concerned column: 'ID'.", e.getMessage());
 		}
  	}
 	
@@ -275,8 +308,8 @@ public class SqlPojoMemoDBTest {
 		
 		// assert
 		final String selectStatement = "select * from TEST_TABLE_NAME";
-		@SuppressWarnings("unchecked")
-		List<Object[]> result = (List<Object[]>) SqlPojoMemoDB.execute( selectStatement );
+		final List<Object[]> result = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement)).getDataRows();
+		
 		assertNull("not null expected", result.get(0)[0]);
 		assertNull("not null expected", result.get(0)[1]);
  	}
@@ -313,8 +346,8 @@ public class SqlPojoMemoDBTest {
 		// assert
 		final TableStoreStatistics dbContent = SqlPojoMemoDB.getDbStatistics();
 		assertEquals("row number", 1,  dbContent.getNumberOfRows("TEST_TABLE_NAME"));
-		@SuppressWarnings("unchecked")
-		List<Object[]> result = (List<Object[]>) SqlPojoMemoDB.execute("select * from TEST_TABLE_NAME");
+		final List<Object[]> result = ((SelectionTable) SqlPojoMemoDB.execute("select * from TEST_TABLE_NAME")).getDataRows();
+		
 		assertEquals("field content", "A b C",  (String)(result.get(0)[0]));
 		assertEquals("field content", "x Y z",  (String)(result.get(0)[1]));
  	}
@@ -333,8 +366,7 @@ public class SqlPojoMemoDBTest {
 		}
 		
 		// assert
-		@SuppressWarnings("unchecked")
-		List<Object[]> result = (List<Object[]>) SqlPojoMemoDB.execute( "select * from TEN_SUM_FIELD" );
+		List<Object[]> result = ((SelectionTable) SqlPojoMemoDB.execute( "select * from TEN_SUM_FIELD" )).getDataRows();
 		assertEquals("row number", 225,  result.size());
 		assertEquals("value", "SalesPersonInformation", result.get(0)[1]);
 		assertEquals("value", null, result.get(0)[3]);
@@ -363,8 +395,7 @@ public class SqlPojoMemoDBTest {
 		final String selectStatement =  "select * from TEST_TABLE_NAME";
 		
 		// act
-		@SuppressWarnings("unchecked")
-		final List<Object[]> result = (List<Object[]>) SqlPojoMemoDB.execute( selectStatement );
+		final List<Object[]> result = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement)).getDataRows();
 		
 		// assert
 		assertEquals("row number", 4, result.size());
@@ -388,8 +419,7 @@ public class SqlPojoMemoDBTest {
 		final String selectStatement =  "select Name, From from TEST_TABLE_NAME";
 
 		// act
-		@SuppressWarnings("unchecked")
-		final List<Object[]> result = (List<Object[]>) SqlPojoMemoDB.execute( selectStatement );
+		final List<Object[]> result = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement)).getDataRows();
 		
 		assertEquals("row number", 4, result.size());
 		assertEquals("column number", 2,  result.get(0).length);
@@ -412,8 +442,7 @@ public class SqlPojoMemoDBTest {
 		final String selectStatement =  "select * from TEST_TABLE_NAME where Name='abc'";
 
 		// act
-		@SuppressWarnings("unchecked")
-		final List<Object[]> result = (List<Object[]>) SqlPojoMemoDB.execute( selectStatement );
+		final List<Object[]> result = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement)).getDataRows();
 		
 		assertEquals("row number", 1, result.size());
 		assertEquals("column number", 4,  result.get(0).length);
@@ -430,8 +459,7 @@ public class SqlPojoMemoDBTest {
 		final String selectStatement =  "select Name, From from TEST_TABLE_NAME where Name='abc'";
 
 		// act
-		@SuppressWarnings("unchecked")
-		final List<Object[]> result = (List<Object[]>) SqlPojoMemoDB.execute( selectStatement );
+		final List<Object[]> result = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement)).getDataRows();
 		
 		assertEquals("row number", 1, result.size());
 		assertEquals("column number", 2,  result.get(0).length);
@@ -466,8 +494,7 @@ public class SqlPojoMemoDBTest {
 		final String selectStatement =  "select * from TEST_TABLE_NAME where Until=to_date('15.05.16','DD.MM.RR') AND ID=123";
 
 		// act
-		@SuppressWarnings("unchecked")
-		final List<Object[]> result = (List<Object[]>) SqlPojoMemoDB.execute( selectStatement );
+		final List<Object[]> result = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement)).getDataRows();
 		
 		assertEquals("row number", 1, result.size());
 		assertEquals("column number", 4,  result.get(0).length);
@@ -476,7 +503,6 @@ public class SqlPojoMemoDBTest {
 	}
 	
 	@Test
-	@SuppressWarnings("unchecked")
 	public void selectsDataRowForUnequalDateAndID() throws SQLException
 	{
 		// arrange
@@ -488,9 +514,9 @@ public class SqlPojoMemoDBTest {
 		final String selectStatement3 =  "select * from TEST_TABLE_NAME";
 
 		// act
-		final List<Object[]> result1 = (List<Object[]>) SqlPojoMemoDB.execute( selectStatement1 );
-		final List<Object[]> result2 = (List<Object[]>) SqlPojoMemoDB.execute( selectStatement2 );
-		final List<Object[]> result3 = (List<Object[]>) SqlPojoMemoDB.execute( selectStatement3 );
+		final List<Object[]> result1 = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement1)).getDataRows();
+		final List<Object[]> result2 = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement2)).getDataRows();
+		final List<Object[]> result3 = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement3)).getDataRows();
 		
 		assertEquals("row number", 4, result1.size());
 		assertEquals("row number", 4, result2.size());
@@ -498,7 +524,6 @@ public class SqlPojoMemoDBTest {
 	}
 	
 	@Test
-	@SuppressWarnings("unchecked")
 	public void selectsDateValuesAndConvertsThemAsString() throws SQLException
 	{
 		// arrange
@@ -508,12 +533,12 @@ public class SqlPojoMemoDBTest {
 		final String selectStatement =  "select to_char(Until,'dd.mm.yyyy hh24:mi:ss') from TEST_TABLE_NAME";
 
 		// act
-		final List<Object[]> result1 = (List<Object[]>) SqlPojoMemoDB.execute( selectStatement );
+		final List<Object[]> result = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement)).getDataRows();
 		
 		// assert
-		assertEquals("row number", 5, result1.size());
-		assertEquals("type of value", "String", result1.get(4)[0].getClass().getSimpleName());
-		assertEquals("date as String", "15.05.2016 00:00:00", (String) result1.get(4)[0]);
+		assertEquals("row number", 5, result.size());
+		assertEquals("type of value", "String", result.get(4)[0].getClass().getSimpleName());
+		assertEquals("date as String", "15.05.2016 00:00:00", (String) result.get(4)[0]);
 	}
 
 	@Test
@@ -527,13 +552,53 @@ public class SqlPojoMemoDBTest {
 	    final String selectStatement = "select TT.ID, TT.NAME from TEST_TABLE_NAME TT";
 
 		// act
-		@SuppressWarnings("unchecked")
-		final List<Object[]> result = (List<Object[]>) SqlPojoMemoDB.execute( selectStatement );
+	    final List<Object[]> result = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement)).getDataRows();
 		
 		assertEquals("# rows", 1, result.size());
 		assertEquals("column number", 2,  result.get(0).length);
 		assertEquals("id", "123",  "" + result.get(0)[0]);
 		assertEquals("name", "name",  "" + result.get(0)[1]);
+	}
+
+	@Test
+	public void ordersSelectionResult() throws SQLException
+	{
+		// arrange
+		SqlPojoMemoDB.execute( "create table TEST_TABLE_NAME (ID NUMBER(2), NAME VARCHAR(5), created date)" );
+		SqlPojoMemoDB.execute( "insert into TEST_TABLE_NAME (ID, NAME, created) VALUES (10, 'B', to_date('20.01.16','DD.MM.RR'))" );
+		SqlPojoMemoDB.execute( "insert into TEST_TABLE_NAME (ID, NAME, created) VALUES (30, 'C', to_date('20.03.16','DD.MM.RR'))" );
+		SqlPojoMemoDB.execute( "insert into TEST_TABLE_NAME (ID, NAME, created) VALUES (20, 'A', to_date('20.02.16','DD.MM.RR'))" );
+		final String selectStatement = "select TT.ID, TT.NAME, TT.created from TEST_TABLE_NAME TT";
+
+		// act
+		final List<Object[]> result1 = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement)).getDataRows();
+		final List<Object[]> result2 = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement + " order by ID asc")).getDataRows();
+		final List<Object[]> result3 = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement + " order by ID desc")).getDataRows();
+		final List<Object[]> result4 = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement + " order by Name")).getDataRows();
+		final List<Object[]> result5 = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement + " order by Name desc")).getDataRows();
+		final List<Object[]> result6 = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement + " order by created")).getDataRows();
+		final List<Object[]> result7 = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement + " order by created desc")).getDataRows();
+
+		assertEquals("first ID", "10", "" + result1.get(0)[0]);
+		assertEquals("last ID",  "20", "" + result1.get(2)[0]);  // not ordered
+
+		assertEquals("first ID", "10", "" + result2.get(0)[0]);
+		assertEquals("last ID",  "30", "" + result2.get(2)[0]); // ASC ordered
+
+		assertEquals("first ID", "30", "" + result3.get(0)[0]);
+		assertEquals("last ID",  "10", "" + result3.get(2)[0]); // DESC ordered
+
+		assertEquals("first name", "A", "" + result4.get(0)[1]);
+		assertEquals("last name",  "C", "" + result4.get(2)[1]);  // ASC ordered
+
+		assertEquals("first name", "C", "" + result5.get(0)[1]);
+		assertEquals("last name",  "A", "" + result5.get(2)[1]);  // DESC ordered
+
+		assertEquals("first create", "2016-01-20T00:00:00.000+01:00", "" + result6.get(0)[2]);
+		assertEquals("last create",  "2016-03-20T00:00:00.000+01:00", "" + result6.get(2)[2]);  // ASC ordered
+
+		assertEquals("first create", "2016-03-20T00:00:00.000+01:00", "" + result7.get(0)[2]);
+		assertEquals("last create",  "2016-01-20T00:00:00.000+01:00", "" + result7.get(2)[2]);  // DESC ordered
 	}
 
 
@@ -555,8 +620,7 @@ public class SqlPojoMemoDBTest {
 		assertEquals("number of updated data rows", numberOfDataRows, result);
 		
 		final String selectStatement =  "select Name, From from TEST_TABLE_NAME";
-		@SuppressWarnings("unchecked")
-		final List<Object[]> values = (List<Object[]>) SqlPojoMemoDB.execute( selectStatement );
+		final List<Object[]> values = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement)).getDataRows();
 		
 		assertEquals("value", "a new name",  "" + values.get(0)[0]);
 		assertEquals("value", "a new name",  "" + values.get(1)[0]);
@@ -582,8 +646,7 @@ public class SqlPojoMemoDBTest {
 		assertEquals("number of updated data rows", 1, result);
 		
 		final String selectStatement =  "select Name, From from TEST_TABLE_NAME";
-		@SuppressWarnings("unchecked")
-		final List<Object[]> values = (List<Object[]>) SqlPojoMemoDB.execute( selectStatement );
+		final List<Object[]> values = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement)).getDataRows();
 		
 		assertEquals("value", "a new name",  "" + values.get(0)[0]);
 		assertEquals("value", "2016-07-20T00:00:00.000+02:00",  "" + values.get(0)[1]);
@@ -611,41 +674,41 @@ public class SqlPojoMemoDBTest {
 
 	
 	@Test
-	@SuppressWarnings("unchecked")
 	public void deletesOnlyRowsWithNullID() throws SQLException
 	{
 		// arrange
 		createDbStandardTestContent();
 		final String selectStatement = "select * from TEST_TABLE_NAME where ID IS NULL";
-		List<Object[]> result = (List<Object[]>) SqlPojoMemoDB.execute( selectStatement );
+		List<Object[]> result = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement)).getDataRows();
+		
 		assertEquals("number of data rows", 1, result.size());
 
 		// act
 		SqlPojoMemoDB.execute( "delete from TEST_TABLE_NAME where ID IS NULL" );
 
 		// assert
-		result = (List<Object[]>) SqlPojoMemoDB.execute( selectStatement );
+		result = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement)).getDataRows();
 		assertEquals("number of data rows", 0, result.size());
 	}
 	
 	@Test
-	@SuppressWarnings("unchecked")
 	public void deletesOnlyRowsWithIDNotNull() throws SQLException
 	{
 		// arrange
 		createDbStandardTestContent();
 		final String selectStatement = "select * from TEST_TABLE_NAME where ID IS NOT NULL";
-		List<Object[]> result = (List<Object[]>) SqlPojoMemoDB.execute( selectStatement );
+		List<Object[]> result = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement)).getDataRows();
 		assertEquals("number of data rows", 3, result.size());
 
 		// act
 		SqlPojoMemoDB.execute( "delete from TEST_TABLE_NAME where ID IS NOT NULL" );
 
 		// assert
-		result = (List<Object[]>) SqlPojoMemoDB.execute( selectStatement );
+		result = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement)).getDataRows();
 		assertEquals("number of data rows", 0, result.size());
 	}
 
+	
 	// #############################################################################################
 	//                 C R E A T E    S E Q U E N C E    S T A T E M E N T   T E S T S
 	// #############################################################################################
@@ -684,8 +747,7 @@ public class SqlPojoMemoDBTest {
 		SqlPojoMemoDB.execute( insertStatement );
 
 		// assert
-		@SuppressWarnings({ "unchecked" })
-		final List<Object[]> result = (List<Object[]>) SqlPojoMemoDB.execute( selectStatement );
+		final List<Object[]> result = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement)).getDataRows();
 		assertEquals("number of rows", 1, result.size());
 		assertEquals("ID", 124L, result.get(0)[0]);
 	}
@@ -712,9 +774,11 @@ public class SqlPojoMemoDBTest {
 	}
 
 	@Test
-	@SuppressWarnings("unchecked")
-	public void returnsNextValUsingOracleDual() throws SQLException
+	public void returnsNextValUsingOracleDual() throws SQLException, NoSuchFieldException, IllegalAccessException
 	{
+        DbProperties.USE_ORACLE_DUAL_TABLE = true;
+		SqlPojoMemoDB.reset();
+
 		// arrange
 		final int startValue1 = 7;
 		final int startValue2 = 3;
@@ -726,9 +790,9 @@ public class SqlPojoMemoDBTest {
 		SqlPojoMemoDB.execute( createSequenceStatement2 );
 
 		// act
-		List<Object[]> result1a = (List<Object[]>) SqlPojoMemoDB.execute( selectNextValStatement1 );
-		List<Object[]> result1b = (List<Object[]>) SqlPojoMemoDB.execute( selectNextValStatement1 );
-		List<Object[]> result2 = (List<Object[]>) SqlPojoMemoDB.execute( selectNextValStatement2 );
+		final List<Object[]> result1a = ((SelectionTable) SqlPojoMemoDB.execute(selectNextValStatement1)).getDataRows();
+		final List<Object[]> result1b = ((SelectionTable) SqlPojoMemoDB.execute(selectNextValStatement1)).getDataRows();
+		final List<Object[]> result2 = ((SelectionTable) SqlPojoMemoDB.execute(selectNextValStatement2)).getDataRows();
 
 		// assert
 		final String resultAsString1a = ((BigDecimal) result1a.get(0)[0]).toPlainString();
@@ -753,8 +817,7 @@ public class SqlPojoMemoDBTest {
 		final String selectStatement = "select T2.Name, T1.Description from TEST_TABLE_NAME_1 T1, TEST_TABLE_NAME_2 T2 where T1.ID=T2.ID";
 
 		// act
-		@SuppressWarnings("unchecked")
-		final List<Object[]> result = (List<Object[]>) SqlPojoMemoDB.execute( selectStatement );
+		final List<Object[]> result = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement)).getDataRows();
 		
 		assertEquals("column number", 2,  result.get(0).length);
 		assertEquals("row number", 1, result.size());
@@ -768,8 +831,7 @@ public class SqlPojoMemoDBTest {
 		final String selectStatement = "select T2.Name, T1.Description from TEST_TABLE_NAME_1 T1, TEST_TABLE_NAME_2 T2 where T1.ID=T2.ID and T1.Type1=T2.Type2";
 
 		// act
-		@SuppressWarnings("unchecked")
-		final List<Object[]> result = (List<Object[]>) SqlPojoMemoDB.execute( selectStatement );
+		final List<Object[]> result = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement)).getDataRows();
 		
 		//assert
 		assertEquals("row number", 0, result.size());
@@ -783,9 +845,7 @@ public class SqlPojoMemoDBTest {
 		final String selectStatement = "select T3.Name, T2.Responsible, T1.CreationDate from TEST_TABLE_NAME_1 T1, TEST_TABLE_NAME_2 T2, TEST_TABLE_NAME_2 T3  where T1.ID=T2.ID and T2.Name=T3.Name";
 
 		// act
-		@SuppressWarnings("unchecked")
-		final List<Object[]> result = (List<Object[]>) SqlPojoMemoDB.execute( selectStatement );
-
+		final List<Object[]> result = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement)).getDataRows();
 		//assert
 		assertEquals("column number", 3,  result.get(0).length);
 		assertEquals("row number", 1, result.size());
@@ -800,9 +860,8 @@ public class SqlPojoMemoDBTest {
 		final String selectStatement = "select T1.Name, T2.Name, T1.From, T2.Type from TEST_TABLE_NAME as T1, TEST_TABLE_NAME_2 as T2 where T1.ID=T2.ID";
 
 		// act
-		@SuppressWarnings("unchecked")
-		final List<Object[]> result = (List<Object[]>) SqlPojoMemoDB.execute( selectStatement );
-
+		final List<Object[]> result = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement)).getDataRows();
+		
 		//assert
 		assertEquals("column number", 4,  result.get(0).length);
 		assertEquals("row number", 2, result.size());
@@ -816,14 +875,33 @@ public class SqlPojoMemoDBTest {
 		final String selectStatement = "select T1.Name, T2.Name, T1.From, T2.Type from TEST_TABLE_NAME T1 JOIN TEST_TABLE_NAME_2 T2 on T1.ID=T2.ID where T1.Name is null";
 
 		// act
-		@SuppressWarnings("unchecked")
-		final List<Object[]> result = (List<Object[]>) SqlPojoMemoDB.execute( selectStatement );
-
+		final List<Object[]> result = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement)).getDataRows();
+		
 		//assert
 		assertEquals("column number", 4,  result.get(0).length);
 		assertEquals("row number", 1, result.size());
-	}	
-	
+	}
+
+	@Test
+	public void ordersSelectionResultOfJoinedTable() throws SQLException
+	{
+		// arrange
+		createDb_Join_BigTestContent();
+		SqlPojoMemoDB.execute( "insert into TEST_TABLE_NAME (ID) VALUES (12)" );
+		SqlPojoMemoDB.execute( "insert into TEST_TABLE_NAME_2 (ID, Type) VALUES (12, 'T4')" );
+
+		final String selectStatement = "select T1.Name, T2.Name, T1.From, T2.Type from TEST_TABLE_NAME T1 JOIN TEST_TABLE_NAME_2 T2 on T1.ID=T2.ID where T1.Name is null order by T2.Type DESC";
+
+		// act
+		final List<Object[]> result = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement)).getDataRows();
+
+		//assert
+		assertEquals("row number", 2, result.size());
+		assertEquals("first name", "T4", "" + result.get(0)[3]);
+		assertEquals("last name",  "T3", "" + result.get(1)[3]);  // ASC ordered
+	}
+
+
 	// #############################################################################################
 	//                                   M I S C    T E S T S
 	// #############################################################################################
@@ -839,16 +917,61 @@ public class SqlPojoMemoDBTest {
 		// act
 		SqlPojoMemoDB.execute( createTableStatement );
 		SqlPojoMemoDB.execute( insertStatement );
-		@SuppressWarnings("unchecked")
-		final List<Object[]> result = (List<Object[]>) SqlPojoMemoDB.execute( selectStatement );
+		final List<Object[]> result = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement)).getDataRows();
 		
 		// assert
 		assertEquals("row number", 1, result.size());
 		assertEquals("column number", 2,  result.get(0).length);
 	}
-	
 
-	
+    @Test
+    public void handlesUnexpectedProblem_nonsenseColumnType() throws SQLException
+    {
+        // arrange
+        final String createTableStatement = "create table X (ID Number(5) unique primary not null)";
+
+        // act
+        try {
+            SqlPojoMemoDB.execute(createTableStatement);
+            fail("Expected exception was not thrown!");
+        } catch (Exception e) {
+            // assert
+            assertEquals("Error message", "Unparsable column type 'NUMBER(5)  PRIMARY'. Concerned column: 'ID'.", e.getMessage());
+        }
+    }
+
+    @Test
+    public void handlesUnexpectedProblem_invalidMaximumLength() throws SQLException
+    {
+        // arrange
+        final String createTableStatement = "create table X (ID Number(5a) )";
+
+        // act
+        try {
+            SqlPojoMemoDB.execute(createTableStatement);
+            fail("Expected exception was not thrown!");
+        } catch (Exception e) {
+            // assert
+            assertEquals("Error message", "Non parseable maximum length: '5A'. Concerned column: 'ID'.", e.getMessage());
+        }
+    }
+
+    @Test
+    public void handlesUnexpectedProblem_missingClosingParenthesis() throws SQLException
+    {
+        // arrange
+        final String createTableStatement = "create table X (ID Number(5) primary key} ";
+
+        // act
+        try {
+            SqlPojoMemoDB.execute(createTableStatement);
+            fail("Expected exception was not thrown!");
+        } catch (Exception e) {
+            // assert
+            assertEquals("Error message", "Missing closing parenthesis in '(ID Number(5) primary key}'.", e.getMessage());
+        }
+    }
+
 	// #############################################################################################
 	//                                Private Methods
 	// #############################################################################################

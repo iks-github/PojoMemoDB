@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 /**
- * All classes that store domain data are located in this package. 
+ * Interface classes of domain objects are located in this package. 
  */
 package com.iksgmbh.sql.pojomemodb.dataobjects.interfaces;

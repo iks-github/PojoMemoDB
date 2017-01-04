@@ -15,13 +15,14 @@
  */
 package com.iksgmbh.sql.pojomemodb.dataobjects.persistent;
 
-import static org.junit.Assert.assertEquals;
-
-import java.sql.SQLDataException;
-
+import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.ColumnInitData;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.sql.SQLDataException;
+
+import static org.junit.Assert.assertEquals;
 
 public class ColumnTest 
 {
@@ -29,7 +30,7 @@ public class ColumnTest
 	
 	@Before
 	public void setup() throws SQLDataException {
-		sut = new Column("Test", "Date", true, 1, null);
+		sut = new Column(createColumnInitData("Test", "Date"), 1, null);
 	}
 	
 	@Test
@@ -44,5 +45,11 @@ public class ColumnTest
 		// assert
 		assertEquals("date value", "2016-05-15T00:00:00.000+02:00", result.toString());
 	}
+
+    private ColumnInitData createColumnInitData(String colName, String colType) {
+        ColumnInitData toReturn = new ColumnInitData(colName);
+        toReturn.columnType = colType;
+        return toReturn;
+    }
 
 }

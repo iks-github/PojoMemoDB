@@ -15,15 +15,27 @@
  */
 package com.iksgmbh.sql.pojomemodb.utils;
 
-import static org.junit.Assert.*;
-
+import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.*;
 import org.junit.Test;
 
-import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.InterimParseResult;
+import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.*;
+import static org.junit.Assert.assertEquals;
 
-public class StringParseUtilTest {
+public class StringParseUtilTest
+{
+    @Test
+    public void test() throws Exception {
+        String input1 = "NUMBER(10,0) default 1, Name VARCHAR(10)')";
+        String input2 = "NUMBER(10,0) default 1)";
 
-	@Test
+        InterimParseResult parseResult1 = StringParseUtil.parseNextValue(input1, SPACE, COMMA, CLOSING_PARENTHESIS + CLOSING_PARENTHESIS);
+        InterimParseResult parseResult2 = StringParseUtil.parseNextValue(input2, SPACE, COMMA, CLOSING_PARENTHESIS + CLOSING_PARENTHESIS);
+
+        assertEquals("default 1, Name VARCHAR(10)')", parseResult1.unparsedRest);
+        assertEquals("default 1)", parseResult2.unparsedRest);
+    }
+
+    @Test
 	public void removesSurroundingPrefixAndPostFixFromString() throws Exception {
 		assertEquals("abc", StringParseUtil.removeSurroundingPrefixAndPostFix("'abc'", "'", "'"));
 	}
@@ -100,5 +112,18 @@ public class StringParseUtilTest {
 		assertEquals("parsedValue", value, interimParseResult.parsedValue);
 		assertEquals("unparsedRest", unparsedRest, interimParseResult.unparsedRest);
 	}
-	
+
+    @Test
+    public void countsOccurrencesOfChars() throws Exception
+    {
+        // act
+        final int result1 = StringParseUtil.countOccurrencesOf("abABAab", 'A');
+        final int result2 = StringParseUtil.countOccurrencesOf("abABAab", 'c');
+
+        // assert
+        assertEquals("number of occurrences", 2, result1);
+        assertEquals("number of occurrences", 0, result2);
+
+    }
+
 }

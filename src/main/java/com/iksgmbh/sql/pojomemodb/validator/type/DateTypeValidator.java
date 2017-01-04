@@ -13,37 +13,57 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.iksgmbh.sql.pojomemodb.dataobjects.validator;
+package com.iksgmbh.sql.pojomemodb.validator.type;
 
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.SYSDATE;
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.TO_DATE;
+import com.iksgmbh.sql.pojomemodb.validator.TypeValidator;
+import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil;
+import org.joda.time.DateTime;
 
 import java.sql.SQLDataException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import org.joda.time.DateTime;
+import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.*;
 
-import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil;
 
-public class DateValidator extends Validator 
+public class DateTypeValidator extends TypeValidator
 {
 	private static final ValidatorType VALIDATION_TYPE = ValidatorType.DATE;
-	
-	@Override 
-	public void validate(Object value) throws SQLDataException {
-		// nothing to do here
-	}
-	
+
+    @Override
+    public void validateValueForType(Object value) throws SQLDataException
+    {
+        if (value == null) return; // nullable is not checked here
+
+        try {
+            if (value instanceof String) {
+                convertIntoColumnType( (String) value );
+                return;
+            }
+
+            if (value instanceof DateTime) {
+                convertIntoColumnType( ((DateTime) value).toString() );
+                return;
+            }
+
+            throw new SQLDataException("Value '" + value + "' is not valid");
+
+        } catch (SQLDataException e) {
+            throw new SQLDataException("Value '" + value + "' is not valid");
+        }
+    }
 	@Override 
 	public ValidatorType getType() { 
 		return VALIDATION_TYPE; 
 	}
 
 	@Override
-	public Object convertIntoColumnType(String valueAsString) throws SQLDataException {
-		if (SYSDATE.equals(valueAsString)) {
+	public Object convertIntoColumnType(String valueAsString) throws SQLDataException
+    {
+		if (SYSDATE.equals(valueAsString)
+            || CURRENT_TIMESTAMP.equals(valueAsString)
+            || GET_DATE.equals(valueAsString)) {
 			return new DateTime();
 		}
 		
@@ -100,5 +120,20 @@ public class DateValidator extends Validator
 		
 	}
 
-	
+	@Override
+	public Boolean isValue1SmallerThanValue2(Object value1, Object value2) throws SQLDataException
+	{
+		if (value1 == null || value2 == null)
+			return isValue1SmallerThanValue2ForNullvalues(value1, value2);
+
+		final DateTime dt1 = (DateTime) value1;
+		final DateTime dt2 = (DateTime) value2;
+
+		int result = dt1.compareTo(dt2);
+
+		if (result == 0) return null;
+
+		return result == -1;
+	}
+
 }

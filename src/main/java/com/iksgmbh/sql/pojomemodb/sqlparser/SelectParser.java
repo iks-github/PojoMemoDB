@@ -15,35 +15,29 @@
  */
 package com.iksgmbh.sql.pojomemodb.sqlparser;
 
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.*;
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.FROM;
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.WHERE;
-import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.CLOSING_PARENTHESIS;
-import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.COMMA;
-import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.OPENING_PARENTHESIS;
-import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.SPACE;
-import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.parseNextValue;
-import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.parseNextValueByLastOccurrence;
+import com.iksgmbh.sql.pojomemodb.SQLKeyWords;
+import com.iksgmbh.sql.pojomemodb.SqlExecutor;
+import com.iksgmbh.sql.pojomemodb.SqlExecutor.ParsedSelectData;
+import com.iksgmbh.sql.pojomemodb.SqlExecutor.TableId;
+import com.iksgmbh.sql.pojomemodb.SqlPojoMemoDB;
+import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.OrderCondition;
+import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.WhereCondition;
+import com.iksgmbh.sql.pojomemodb.sqlparser.helper.OrderConditionParser;
+import com.iksgmbh.sql.pojomemodb.sqlparser.helper.WhereConditionParser;
+import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.*;
+import org.apache.commons.lang3.StringUtils;
 
 import java.sql.SQLDataException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
+import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.*;
+import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.*;
 
-import com.iksgmbh.sql.pojomemodb.SQLKeyWords;
-import com.iksgmbh.sql.pojomemodb.SqlExecutor;
-import com.iksgmbh.sql.pojomemodb.SqlExecutor.ParsedSelectData;
-import com.iksgmbh.sql.pojomemodb.SqlExecutor.TableId;
-import com.iksgmbh.sql.pojomemodb.SqlPojoMemoDB;
-import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.WhereCondition;
-import com.iksgmbh.sql.pojomemodb.sqlparser.helper.WhereConditionParser;
-import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.InterimParseResult;
-
-public class SqlPojoSelectParser extends AbstractSqlPojoMemoryParser
+public class SelectParser extends SqlPojoMemoParser
 {
-	public SqlPojoSelectParser(final SqlPojoMemoDB memoryDb)  {
+	public SelectParser(final SqlPojoMemoDB memoryDb)  {
 		this.memoryDb = memoryDb;
 	}
 
@@ -58,7 +52,16 @@ public class SqlPojoSelectParser extends AbstractSqlPojoMemoryParser
 
 	public ParsedSelectData parseSelectSql(final String sql) throws SQLException 
 	{
-		InterimParseResult parseResult = parseNextValue(sql, WHERE);  
+		InterimParseResult parseResult = parseNextValue(sql, ORDER_BY);
+
+		final List<OrderCondition> orderConditions;
+		if (parseResult.delimiter == null)  {
+			orderConditions = new ArrayList<OrderCondition>();
+		} else {
+			orderConditions = OrderConditionParser.doYourJob(parseResult.unparsedRest);
+		}
+
+		parseResult = parseNextValue(parseResult.parsedValue, WHERE);
 		final String whereClause = parseResult.unparsedRest;
 		final String selectClause = parseResult.parsedValue;
 		final List<WhereCondition> whereConditions = WhereConditionParser.doYourJob(whereClause);
@@ -87,11 +90,13 @@ public class SqlPojoSelectParser extends AbstractSqlPojoMemoryParser
 			// simple select on only one table
 			removeTableIdFromColumnNamesIfPresent(selectedTables.get(0), selectedColumns); 
 		} else {
-			replaceAliasInWhereClause(whereConditions, selectedTables);
+			replaceAliasInWhereConditions(whereConditions, selectedTables);
 			replaceAliasInSelectClause(selectedColumns, selectedTables);
+			replaceAliasInOrderConditions(orderConditions, selectedTables);
 		}
-		
-		ParsedSelectData toReturn = new ParsedSelectData(buildTableNameList(selectedTables), selectedColumns, whereConditions);
+
+		ParsedSelectData toReturn = new ParsedSelectData(buildTableNameList(selectedTables), selectedColumns,
+				                                         whereConditions, orderConditions);
 		checkForUnkownAliases(toReturn);
 		return toReturn;
 	}
@@ -212,14 +217,27 @@ public class SqlPojoSelectParser extends AbstractSqlPojoMemoryParser
 			}
 			
 			if (! isKnown) {
-				throw new SQLDataException("Unkown column id <" + columnId + "> detected.");
+				throw new SQLDataException("Unknown column id <" + columnId + "> detected.");
 			}
 		}
 		
 	}
 
-	private void replaceAliasInWhereClause(final List<WhereCondition> whereConditions, 
-			                                   final List<TableId> tableIdList) throws SQLException 
+	private void replaceAliasInOrderConditions(final List<OrderCondition> orderConditions,
+											   final List<TableId> tableIdList) throws SQLException
+	{
+		final List<OrderCondition> toReturn = new ArrayList<OrderCondition>();
+		for (OrderCondition orderCondition : orderConditions) {
+			toReturn.add(new OrderCondition(replaceAliases(orderCondition.getColumnName(), tableIdList),
+					orderCondition.getDirection()));
+		}
+		orderConditions.clear();
+		orderConditions.addAll(toReturn);
+	}
+
+
+	private void replaceAliasInWhereConditions(final List<WhereCondition> whereConditions,
+											   final List<TableId> tableIdList) throws SQLException
 	{
 		final List<WhereCondition> toReturn = new ArrayList<WhereCondition>();
 		for (WhereCondition whereCondition : whereConditions) {
