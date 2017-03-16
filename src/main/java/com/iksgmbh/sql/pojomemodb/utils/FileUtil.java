@@ -27,9 +27,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
-
-
 public class FileUtil {
 
 	public enum FileCreationStatus {NOT_EXISTING_FILE_CREATED, EXISTING_FILE_OVERWRITTEN, EXISTING_FILE_PRESERVED};
@@ -477,7 +474,7 @@ public class FileUtil {
 			final List<String> newFileContent = new ArrayList<String>();
 
 			for (final String line : oldFileContent) {
-				newFileContent.add(StringUtils.replace(line, toReplace, replacement));
+				newFileContent.add(StringParseUtil.replace(line, toReplace, replacement));
 			}
 
 			createNewFileWithContent(textFile, newFileContent);

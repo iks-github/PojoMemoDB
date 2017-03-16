@@ -31,9 +31,9 @@ import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.SET;
 import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.WHERE;
 import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.*;
 
-public class UpdateParser extends SqlPojoMemoParser
+public class UpdateTableParser extends SqlPojoMemoParser
 {	
-	public UpdateParser(final SqlPojoMemoDB memoryDb)  {
+	public UpdateTableParser(final SqlPojoMemoDB memoryDb)  {
 		this.memoryDb = memoryDb;
 	}
 

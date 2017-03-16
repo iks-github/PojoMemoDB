@@ -15,6 +15,17 @@
  */
 package com.iksgmbh.sql.pojomemodb.dataobjects.persistent;
 
+import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.TO_CHAR;
+
+import java.math.BigDecimal;
+import java.sql.SQLDataException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+
 import com.iksgmbh.sql.pojomemodb.SQLKeyWords;
 import com.iksgmbh.sql.pojomemodb.SqlPojoMemoDB;
 import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.data.ColumnData;
@@ -26,22 +37,10 @@ import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.ApartValue;
 import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.ColumnInitData;
 import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.OrderCondition;
 import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.WhereCondition;
+import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil;
 import com.iksgmbh.sql.pojomemodb.validator.ConstraintValidator;
 import com.iksgmbh.sql.pojomemodb.validator.TypeValidator;
 import com.iksgmbh.sql.pojomemodb.validator.TypeValidator.ValidatorType;
-import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil;
-import org.joda.time.DateTime;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-
-import java.math.BigDecimal;
-import java.sql.SQLDataException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.TO_CHAR;
 
 /**
  * Table implementation of the PojoMemoryDB. 
@@ -209,7 +208,7 @@ public class Table implements TableStatistics, TableMetaData, TableData
 		}
 
 		if (orderConditions.size() > 1) {
-			throw new NotImplementedException();
+			throw new RuntimeException("Not yet implemented!");
 		}
 
 		final String columnName = orderConditions.get(0).getColumnName();
@@ -343,8 +342,8 @@ public class Table implements TableStatistics, TableMetaData, TableData
 			Object value = columnData[dateColumn.getIndexInTable()];
 			
 			if (value != null) {
-				final DateTime dt = (DateTime) value;
-				final String dateAsString = sdf.format(dt.toDate());
+				final Date date = (Date) value;
+				final String dateAsString = sdf.format(date);
 				columnData[dateColumn.getIndexInTable()] = dateAsString;
 			}
 		}
@@ -543,12 +542,14 @@ public class Table implements TableStatistics, TableMetaData, TableData
 					clonedColumnData[i] = null;
 				} else if (objects[i] instanceof String) {
 					clonedColumnData[i] = new String((String) objects[i]);
-				} else if (objects[i] instanceof DateTime) {
-					clonedColumnData[i] = new DateTime(((DateTime) objects[i]).toDate());
+				} else if (objects[i] instanceof Date) {
+					clonedColumnData[i] = (Date) objects[i];
 				} else if (objects[i] instanceof BigDecimal) {
 					clonedColumnData[i] = new BigDecimal(((BigDecimal) objects[i]).toPlainString());
 				} else if (objects[i] instanceof Long) {
 					clonedColumnData[i] = new Long(((Long) objects[i]).longValue());
+				} else if (objects[i] instanceof Boolean) {
+					clonedColumnData[i] = new Boolean(((Boolean) objects[i]).booleanValue());
 				} else {
 					throw new RuntimeException("Unknown data type: " + objects[i].getClass());
 				}

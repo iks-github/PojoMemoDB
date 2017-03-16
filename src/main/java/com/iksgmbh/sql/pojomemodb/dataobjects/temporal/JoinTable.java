@@ -15,16 +15,16 @@
  */
 package com.iksgmbh.sql.pojomemodb.dataobjects.temporal;
 
+import java.math.BigDecimal;
+import java.sql.SQLDataException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 import com.iksgmbh.sql.pojomemodb.SQLKeyWords;
 import com.iksgmbh.sql.pojomemodb.SqlPojoMemoDB;
 import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.Column;
 import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.Table;
-import org.joda.time.DateTime;
-
-import java.math.BigDecimal;
-import java.sql.SQLDataException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class JoinTable extends Table
 {
@@ -195,10 +195,10 @@ public class JoinTable extends Table
 			return i1 == i2;
 		}
 
-		if (o1.getClass().getSimpleName().equals("DateTime")) {
-			final DateTime t1 = (DateTime) o1;
-			final DateTime t2 = (DateTime) o2;
-			return t1.getMillis() == t2.getMillis();
+		if (o1.getClass().getName().equals("java.util.Date")) {
+			final Date d1 = (Date) o1;
+			final Date d2 = (Date) o2;
+			return d1.getTime() == d2.getTime();
 		}
 
 		throw new SQLDataException("Unsupported data type: " + o1.getClass().getName());

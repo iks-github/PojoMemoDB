@@ -27,8 +27,21 @@ import static org.junit.Assert.fail;
 
 public class SelectParserTest
 {	
-	private SelectParser sut = new SelectParser(null);
-
+	private SelectParser sut = new SelectParser(null);	
+	
+	@Test
+	public void parsesSelectStatementForNextSequenceValueInMySqlDialect() throws SQLException 
+	{
+		// arrange
+	    final String selectStatement = "select NextId(\"testmodell\")";
+		
+		// act
+		final ParsedSelectData result = sut.parseSelectSql(selectStatement);
+		
+		// assert
+		assertEquals("tableName", "testmodell", result.mysqlNextIdTable);
+	}	
+	
 	@Test
 	public void parsesSelectStatementWithTableNameInFrontOfColumnNames() throws SQLException 
 	{

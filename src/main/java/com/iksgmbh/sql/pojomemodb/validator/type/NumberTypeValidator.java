@@ -15,6 +15,7 @@
  */
 package com.iksgmbh.sql.pojomemodb.validator.type;
 
+import com.iksgmbh.sql.pojomemodb.SQLKeyWords;
 import com.iksgmbh.sql.pojomemodb.validator.TypeValidator;
 
 import java.math.BigDecimal;
@@ -55,7 +56,8 @@ public class NumberTypeValidator extends TypeValidator
 	@Override
 	public void validateValueForType(Object value) throws SQLDataException
     {
-        if (value == null) return; // nullable is not checked here
+        if ( value == null ) return; // nullable is not checked here
+        if (SQLKeyWords.NULL.equalsIgnoreCase(value.toString())) return;
 
         try {
             convertIntoColumnType( "" + value );

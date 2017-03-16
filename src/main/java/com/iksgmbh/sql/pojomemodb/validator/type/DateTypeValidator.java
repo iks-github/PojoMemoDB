@@ -16,8 +16,8 @@
 package com.iksgmbh.sql.pojomemodb.validator.type;
 
 import com.iksgmbh.sql.pojomemodb.validator.TypeValidator;
+import com.iksgmbh.sql.pojomemodb.SQLKeyWords;
 import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil;
-import org.joda.time.DateTime;
 
 import java.sql.SQLDataException;
 import java.text.ParseException;
@@ -30,11 +30,13 @@ import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.*;
 public class DateTypeValidator extends TypeValidator
 {
 	private static final ValidatorType VALIDATION_TYPE = ValidatorType.DATE;
+	private static final String DATE_IN_MILLIS = "DATE_IN_MILLIS:";
 
     @Override
     public void validateValueForType(Object value) throws SQLDataException
     {
         if (value == null) return; // nullable is not checked here
+        if (SQLKeyWords.NULL.equalsIgnoreCase(value.toString())) return;
 
         try {
             if (value instanceof String) {
@@ -42,8 +44,8 @@ public class DateTypeValidator extends TypeValidator
                 return;
             }
 
-            if (value instanceof DateTime) {
-                convertIntoColumnType( ((DateTime) value).toString() );
+            if (value instanceof Date) {
+                convertIntoColumnType( DATE_IN_MILLIS + ((Date)value).getTime() );
                 return;
             }
 
@@ -64,21 +66,22 @@ public class DateTypeValidator extends TypeValidator
 		if (SYSDATE.equals(valueAsString)
             || CURRENT_TIMESTAMP.equals(valueAsString)
             || GET_DATE.equals(valueAsString)) {
-			return new DateTime();
+			return new Date();
 		}
 		
 		if (valueAsString.startsWith(TO_DATE))			{
-			return toDateTime(valueAsString.substring(TO_DATE.length()));
+			return toDate(valueAsString.substring(TO_DATE.length()));
 		}
 		
-		try {
-			return new DateTime(valueAsString);
-		} catch (Exception e) {
-			throw new SQLDataException("Insert values '" + valueAsString + "' is no date.");
-		}
+		if (valueAsString.startsWith(DATE_IN_MILLIS)) {
+			valueAsString = valueAsString.substring(DATE_IN_MILLIS.length());
+			return new Date(Long.valueOf(valueAsString));
+		}		
+		
+		throw new SQLDataException("Insert values '" + valueAsString + "' is no date.");
 	}
 	
-	private DateTime toDateTime(String dateString) throws SQLDataException 
+	private Date toDate(String dateString) throws SQLDataException 
 	{
 		try {
 			dateString = StringParseUtil.removeSurroundingPrefixAndPostFix(dateString, "(", ")");
@@ -92,7 +95,7 @@ public class DateTypeValidator extends TypeValidator
 			final String dateValue = StringParseUtil.removeSurroundingPrefixAndPostFix(splitResult[0], "'", "'");
 			final String pattern = StringParseUtil.removeSurroundingPrefixAndPostFix(splitResult[1], "'", "'");
 			
-			return toDateTime(dateValue, translateFromOracleToJavaLiterals(pattern));
+			return toDate(dateValue, translateFromOracleToJavaLiterals(pattern));
 		} catch (Exception e) {
 			throw new SQLDataException(e);
 		}
@@ -104,20 +107,16 @@ public class DateTypeValidator extends TypeValidator
 				      .replace('D', 'd'); 
 	}
 
-	private DateTime toDateTime(final String value, 
-			                    final String pattern) throws SQLDataException
+	private Date toDate(final String value, 
+			            final String pattern) throws SQLDataException
 	{
 		final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
-		final Date date;
 		
 		try {
-			date = simpleDateFormat.parse(value);
+			return simpleDateFormat.parse(value);
 		} catch (ParseException e) {
 			throw new SQLDataException("Cannot convert DateTime: dateAsString=" + value + ", pattern=" + pattern);
 		}
-		
-		return new DateTime(date.getTime());
-		
 	}
 
 	@Override
@@ -126,10 +125,10 @@ public class DateTypeValidator extends TypeValidator
 		if (value1 == null || value2 == null)
 			return isValue1SmallerThanValue2ForNullvalues(value1, value2);
 
-		final DateTime dt1 = (DateTime) value1;
-		final DateTime dt2 = (DateTime) value2;
+		final Date d1 = (Date) value1;
+		final Date d2 = (Date) value2;
 
-		int result = dt1.compareTo(dt2);
+		int result = d1.compareTo(d2);
 
 		if (result == 0) return null;
 

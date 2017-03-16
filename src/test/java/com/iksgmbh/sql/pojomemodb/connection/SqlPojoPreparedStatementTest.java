@@ -17,10 +17,31 @@ package com.iksgmbh.sql.pojomemodb.connection;
 
 import static org.junit.Assert.assertEquals;
 
+import java.sql.ResultSet;
+
 import org.junit.Test;
+
+import com.iksgmbh.sql.pojomemodb.SqlPojoMemoDB;
 
 public class SqlPojoPreparedStatementTest {
 
+	@Test
+	public void creates() throws Exception 
+	{
+		// arrange
+		final SqlPojoPreparedStatement statement = new SqlPojoPreparedStatement("select NextId(\"testmodell\")");
+		SqlPojoMemoDB.execute("CREATE TABLE testmodell (ID int PRIMARY KEY NOT NULL)");
+		SqlPojoMemoDB.execute("insert into testmodell (ID) values (5)");
+		
+		// act		
+		ResultSet result = statement.executeQuery();
+		result.first();
+		statement.close();
+		
+		// arrange
+		assertEquals(6, result.getInt(1));
+	}
+	
 	@Test
 	public void createsOutputSql() throws Exception 
 	{

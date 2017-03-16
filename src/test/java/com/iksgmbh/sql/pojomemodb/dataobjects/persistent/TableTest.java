@@ -89,7 +89,7 @@ public class TableTest {
 		// assert
 		assertEquals("number value", "10.2", ((BigDecimal)result2.get(0)[2]).toPlainString() );
 		assertEquals("text value", "Test", result2.get(0)[1]);
-		assertEquals("date value", "2016-05-15T00:00:00.000+02:00", result2.get(0)[0].toString());
+		assertEquals("date value", "Sun May 15 00:00:00 CEST 2016", result2.get(0)[0].toString());
 	}
 
 

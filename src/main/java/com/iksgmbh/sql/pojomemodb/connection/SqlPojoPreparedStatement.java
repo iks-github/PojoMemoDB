@@ -23,6 +23,7 @@ import java.io.Reader;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.*;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 /**
@@ -34,11 +35,14 @@ import java.util.Calendar;
 @SuppressWarnings("unused")
 public class SqlPojoPreparedStatement implements PreparedStatement 
 {
+	private static SimpleDateFormat JAVA_DATE_FORMAT = new SimpleDateFormat("dd:MM:yyyy HH:mm:ss.SSS");
+	private static String SQL_DATE_FORMAT = "DD:MM:RR hh:mm:ss.FF";
 	private static final String QUESTION_MARK = "?";
 	
 	private String inputSql;
 	private String[] replacements;
 	private String[] sqlParts;
+	private boolean closed = false;
 
 	public SqlPojoPreparedStatement(final String inputSql) {
 		this.inputSql = inputSql;
@@ -57,11 +61,6 @@ public class SqlPojoPreparedStatement implements PreparedStatement
 	}
 
 	@Override
-	public void close() throws SQLException {
-		// nothing to do
-	}
-
-	@Override
 	public ResultSet executeQuery() throws SQLException 
 	{
         String sql = buildOutputSql();
@@ -73,8 +72,10 @@ public class SqlPojoPreparedStatement implements PreparedStatement
 	}
 
 	@Override
-	public boolean execute() throws SQLException {
-		SqlPojoMemoDB.execute(inputSql);
+	public boolean execute() throws SQLException 
+	{
+        final String outputSql = buildOutputSql();
+        SqlPojoMemoDB.execute(outputSql);  // uses the SqlExecutor
 		return true;
 	}
 	
@@ -130,29 +131,51 @@ public class SqlPojoPreparedStatement implements PreparedStatement
     @Override
     public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException {
         checkParameterIndex(parameterIndex);
-        replacements[parameterIndex-1] = x.toString();
+        if (x == null) {
+        	replacements[parameterIndex-1] = "null";        	
+        } else {
+        	replacements[parameterIndex-1] = x.toPlainString();
+        }
     }
 
     @Override
     public void setDate(int parameterIndex, Date x) throws SQLException {
         checkParameterIndex(parameterIndex);
-        replacements[parameterIndex-1] = "" + x.getTime();
+        if (x == null) {
+        	replacements[parameterIndex-1] = "null";        	
+        } else {
+        	replacements[parameterIndex-1] = toSqlString(x);
+        }
     }
 
 
     @Override
     public void setTime(int parameterIndex, Time x) throws SQLException {
         checkParameterIndex(parameterIndex);
-        replacements[parameterIndex-1] = "" + x.getTime();
+        if (x == null) {
+        	replacements[parameterIndex-1] = "null";        	
+        } else {
+        	replacements[parameterIndex-1] = "" + x.getTime();
+        }
     }
 
 
     @Override
     public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException {
         checkParameterIndex(parameterIndex);
-        replacements[parameterIndex-1] = "" + x.getTime();
+        if (x == null) {
+        	replacements[parameterIndex-1] = "null";        	
+        } else {
+        	replacements[parameterIndex-1] = "" + x.getTime();
+        }
     }
 
+    @Override
+    public void setBoolean(int parameterIndex, boolean x) throws SQLException {
+    	 checkParameterIndex(parameterIndex);
+         replacements[parameterIndex-1] = "" + x;
+    }
+    
 	private void checkParameterIndex(int parameterIndex) throws SQLException 
 	{
 		if (replacements.length < parameterIndex || parameterIndex < 1)  {
@@ -164,7 +187,25 @@ public class SqlPojoPreparedStatement implements PreparedStatement
 		}
 	}
 
+	private String toSqlString(Date creationDateTime) 
+	{
+		if (creationDateTime == null) return "NULL";
+		return "to_date('" + JAVA_DATE_FORMAT.format(creationDateTime)
+                   + "','" + SQL_DATE_FORMAT + "')";
+	}
 
+
+	@Override
+	public void close() throws SQLException {
+		closed  = true;
+		
+	}
+
+	@Override
+	public boolean isClosed() throws SQLException {
+		return closed;
+	}
+	
 	// ###########################################################################
 	//                 not   implemented    dummy    methods
 	// ###########################################################################
@@ -414,14 +455,6 @@ public class SqlPojoPreparedStatement implements PreparedStatement
 		return 0;
 	}
 
-
-	@Override
-	public boolean isClosed() throws SQLException {
-		if (true) throw new RuntimeException("Not yet implemented!");
-		return false;
-	}
-
-
 	@Override
 	public void setPoolable(boolean poolable) throws SQLException {
 		if (true) throw new RuntimeException("Not yet implemented!");
@@ -451,13 +484,6 @@ public class SqlPojoPreparedStatement implements PreparedStatement
 
 	@Override
 	public void setNull(int parameterIndex, int sqlType) throws SQLException {
-		if (true) throw new RuntimeException("Not yet implemented!");
-		
-	}
-
-
-	@Override
-	public void setBoolean(int parameterIndex, boolean x) throws SQLException {
 		if (true) throw new RuntimeException("Not yet implemented!");
 		
 	}

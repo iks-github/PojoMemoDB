@@ -15,8 +15,6 @@
  */
 package com.iksgmbh.sql.pojomemodb.utils;
 
-import org.apache.commons.lang3.StringUtils;
-
 public class StringParseUtil 
 {
 	public static final String OPENING_PARENTHESIS = "(";
@@ -26,6 +24,8 @@ public class StringParseUtil
 	public static final String EQUALSIGN = "=";
 	public static final String APOSTROPY = "'";
 	
+	public static final int INDEX_NOT_FOUND = -1;
+
 	public static String removeSurroundingPrefixAndPostFix(final String input, 
 			                                               final String prefix, 
 			                                               final String postfix) 
@@ -128,11 +128,11 @@ public class StringParseUtil
 	public static InterimParseResult parseNextValueByLastOccurrence(final String input,
 			                                                        final String delimiter) 
 	{
-		if (StringUtils.isEmpty(delimiter))  {
+		if (isEmpty(delimiter))  {
 			throw new IllegalArgumentException("No valid delimiter defined!");
 		}
 		
-		if (StringUtils.isEmpty(input))  {
+		if (isEmpty(input))  {
 			return new InterimParseResult(input, "", null);
 		}
 
@@ -305,4 +305,40 @@ public class StringParseUtil
 			this.delimiter = delimiter;
 		}
 	}	
+
+	public static boolean isEmpty(String s) {
+		return s == null || "".equals(s);
+	}
+
+	public static String replace(final String text, final String searchString, final String replacement) {
+		return replace(text, searchString, replacement, -1);
+	}
+
+	public static String replace(final String text, final String searchString, final String replacement, int max) 
+	{
+		if (isEmpty(text) || isEmpty(searchString) || replacement == null || max == 0) {
+			return text;
+		}
+		int start = 0;
+		int end = text.indexOf(searchString, start);
+		if (end == INDEX_NOT_FOUND) {
+			return text;
+		}
+		final int replLength = searchString.length();
+		int increase = replacement.length() - replLength;
+		increase = increase < 0 ? 0 : increase;
+		increase *= max < 0 ? 16 : max > 64 ? 64 : max;
+		final StringBuilder buf = new StringBuilder(text.length() + increase);
+		while (end != INDEX_NOT_FOUND) {
+			buf.append(text.substring(start, end)).append(replacement);
+			start = end + replLength;
+			if (--max == 0) {
+				break;
+			}
+			end = text.indexOf(searchString, start);
+		}
+		buf.append(text.substring(start));
+		return buf.toString();
+	}
+	
 }

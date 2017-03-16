@@ -16,6 +16,7 @@
 package com.iksgmbh.sql.pojomemodb.validator;
 
 import com.iksgmbh.sql.pojomemodb.DbProperties;
+import com.iksgmbh.sql.pojomemodb.validator.type.BooleanTypeValidator;
 import com.iksgmbh.sql.pojomemodb.validator.type.DateTypeValidator;
 import com.iksgmbh.sql.pojomemodb.validator.type.NumberTypeValidator;
 import com.iksgmbh.sql.pojomemodb.validator.type.VarcharTypeValidator;
@@ -31,7 +32,7 @@ import java.sql.SQLDataException;
  */
 public abstract class TypeValidator
 {
-	public enum ValidatorType { VARCHAR, VARCHAR2, NUMBER, DATE, TIMESTAMP, TIME};
+	public enum ValidatorType { VARCHAR, VARCHAR2, NUMBER, DATE, TIMESTAMP, TIME, BOOLEAN};
 
 	public static final String MYSQL_BIT = "BIT";
 	public enum MySqlNaturalNumberType { INTEGER, INT, SMALLINT, TINYINT, MEDIUMINT, BIGINT };
@@ -70,21 +71,13 @@ public abstract class TypeValidator
 			case TIMESTAMP:     return new DateTypeValidator();
             case TIME:          return new DateTypeValidator();
             case NUMBER:        return new NumberTypeValidator(result.columnType);
+            case BOOLEAN:       return new BooleanTypeValidator();
 			default:            throw new SQLDataException("Unknown validation type '" + result.validationType + "'.");
 		}
 	}
 
 	private static ColumnTypeColumnInfoPair analyseValidatorType(final String columnType) throws SQLDataException
 	{
-        int pos1 = columnType.indexOf("(");
-        if (pos1 > -1) {
-            int pos2 = columnType.indexOf(")") + 1;
-            String s = columnType.substring(pos2).trim();
-            if (s.length() > 0) {
-                throw new SQLDataException("Unparsable column type '" + columnType + "'.");
-            }
-        }
-
         for (ValidatorType validationType : ValidatorType.values()) {
 			if (columnType.toUpperCase().startsWith(validationType.name())) {
 				return new ColumnTypeColumnInfoPair(validationType, columnType);
@@ -101,7 +94,7 @@ public abstract class TypeValidator
 	private static ColumnTypeColumnInfoPair analyseMySqlValidatorType(String columnType) throws SQLDataException
 	{
 		for (MySqlNaturalNumberType mySqlNaturalNumberType : MySqlNaturalNumberType.values()) {
-			if (columnType.toUpperCase().equals(mySqlNaturalNumberType.name()))
+			if (columnType.toUpperCase().startsWith(mySqlNaturalNumberType.name()))
             {
                 String sizeInfo = columnType.substring(mySqlNaturalNumberType.name().length()).trim();
 
@@ -125,7 +118,7 @@ public abstract class TypeValidator
 		}
 
 		for (MySqlVarcharType mySqlVarcharType : MySqlVarcharType.values()) {
-			if (columnType.toUpperCase().equals(mySqlVarcharType.name()))
+			if (columnType.toUpperCase().startsWith(mySqlVarcharType.name()))
             {
                 String sizeInfo = columnType.substring(mySqlVarcharType.name().length()).trim();
 
@@ -136,7 +129,7 @@ public abstract class TypeValidator
 			}
 		}
 
-		if (columnType.toUpperCase().equals(MYSQL_BIT)) {
+		if (columnType.toUpperCase().startsWith(MYSQL_BIT)) {
             return new ColumnTypeColumnInfoPair(ValidatorType.VARCHAR, "VARCHAR(1)");
 		}
 

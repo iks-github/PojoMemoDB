@@ -47,6 +47,20 @@ public class InsertIntoParserTest {
 		assertEquals("column name", "ID",  result.columnNames.get(1));
  	}
 		
+	@Test
+	public void parsesApostophy() throws SQLException 
+	{
+		// arrange
+		final String insertStatement = "insert into TEST_TABLE_NAME (NAME, TEXT, NUMBER) VALUES ('Bob', 'Don''t worry!', 5)";
+		
+		// act
+		final ParsedInsertData result = sut.parseInsertStatement(insertStatement);
+		
+		// assert
+		assertEquals("Number of column and value mismatch!", result.columnNames.size(), result.dataValues.size());
+		assertEquals("Number of data values", 3, result.dataValues.size());
+		assertEquals("data value", "'Don''t worry!'", result.dataValues.get(1));
+ 	}
 	
 	
 

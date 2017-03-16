@@ -15,7 +15,7 @@ public class SqlPojoDatabaseMetaData implements DatabaseMetaData
     private static final String DATABASE_NAME = "SqlPojoMemoDb";
 
     // Must be idendical to the version in the pom file (without -SNAPSHOT)
-    private static final String DATABASE_VERSION = "0.0.3";
+    private static final String DATABASE_VERSION = "0.0.4";
 
     @Override
     public String getDatabaseProductVersion() throws SQLException {

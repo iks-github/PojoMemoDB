@@ -15,6 +15,25 @@
  */
 package com.iksgmbh.sql.pojomemodb.sqlparser;
 
+import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.ALL_COLUMNS;
+import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.FROM;
+import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.INNER_JOIN;
+import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.JOIN;
+import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.ON;
+import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.ORDER_BY;
+import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.WHERE;
+import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.CLOSING_PARENTHESIS;
+import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.COMMA;
+import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.OPENING_PARENTHESIS;
+import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.SPACE;
+import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.parseNextValue;
+import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.parseNextValueByLastOccurrence;
+
+import java.sql.SQLDataException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.iksgmbh.sql.pojomemodb.SQLKeyWords;
 import com.iksgmbh.sql.pojomemodb.SqlExecutor;
 import com.iksgmbh.sql.pojomemodb.SqlExecutor.ParsedSelectData;
@@ -24,19 +43,13 @@ import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.OrderCondition;
 import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.WhereCondition;
 import com.iksgmbh.sql.pojomemodb.sqlparser.helper.OrderConditionParser;
 import com.iksgmbh.sql.pojomemodb.sqlparser.helper.WhereConditionParser;
-import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.*;
-import org.apache.commons.lang3.StringUtils;
-
-import java.sql.SQLDataException;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.*;
-import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.*;
+import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil;
+import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.InterimParseResult;
 
 public class SelectParser extends SqlPojoMemoParser
 {
+	private static final String MYSQL_NEXTID_TABLE_IDENTIFIER = "select NextId";
+
 	public SelectParser(final SqlPojoMemoDB memoryDb)  {
 		this.memoryDb = memoryDb;
 	}
@@ -52,6 +65,10 @@ public class SelectParser extends SqlPojoMemoParser
 
 	public ParsedSelectData parseSelectSql(final String sql) throws SQLException 
 	{
+		if (sql.startsWith(MYSQL_NEXTID_TABLE_IDENTIFIER)) {
+			return new ParsedSelectData(parseMysqlNextIdTable(sql));
+		}
+		
 		InterimParseResult parseResult = parseNextValue(sql, ORDER_BY);
 
 		final List<OrderCondition> orderConditions;
@@ -100,6 +117,14 @@ public class SelectParser extends SqlPojoMemoParser
 		checkForUnkownAliases(toReturn);
 		return toReturn;
 	}
+
+	private String parseMysqlNextIdTable(String sql) throws SQLException {
+		String substring = sql.substring(MYSQL_NEXTID_TABLE_IDENTIFIER.length());
+		substring = removeSurroundingParentheses(substring);
+		substring = removeSurroundingQuotes(substring);
+		return substring;
+	}
+
 
 	/**
 	 * Parses a part of the SQL join statement that follows ANSI syntax
@@ -301,7 +326,7 @@ public class SelectParser extends SqlPojoMemoParser
 				String newColumnName = oldColumnName.substring(tableId.getTableName().length() + 1);
 				selectedColumns.set(i, newColumnName);
 
-			} else if (! StringUtils.isEmpty(alias)){
+			} else if (! StringParseUtil.isEmpty(alias)){
 				throw new SQLDataException("Column name <" + oldColumnName + "> misses table alias.");
 			}
 		}
@@ -317,12 +342,12 @@ public class SelectParser extends SqlPojoMemoParser
 		InterimParseResult parseResult = parseNextValue(columnNameData, OPENING_PARENTHESIS.charAt(0), CLOSING_PARENTHESIS.charAt(0), COMMA.charAt(0));
 		toReturn.add(parseResult.parsedValue);
 		
-		if ( StringUtils.isEmpty(parseResult.unparsedRest)) {
+		if ( StringParseUtil.isEmpty(parseResult.unparsedRest)) {
 			// do nothing
 		} else if ( ! parseResult.unparsedRest.contains(COMMA)) {
 			toReturn.add(parseResult.unparsedRest);
 		} else {			
-			while ( ! StringUtils.isEmpty( parseResult.unparsedRest) )
+			while ( ! StringParseUtil.isEmpty( parseResult.unparsedRest) )
 			{
 				parseResult = parseNextValue(parseResult.unparsedRest, OPENING_PARENTHESIS.charAt(0), CLOSING_PARENTHESIS.charAt(0), COMMA.charAt(0));
 				toReturn.add(parseResult.parsedValue);

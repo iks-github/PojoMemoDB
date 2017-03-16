@@ -1,4 +1,4 @@
-package com.iksgmbh.sql.pojomemodb.validator;
+package com.iksgmbh.sql.pojomemodb.validator.type;
 
 import com.iksgmbh.sql.pojomemodb.validator.type.VarcharTypeValidator;
 import org.junit.Test;

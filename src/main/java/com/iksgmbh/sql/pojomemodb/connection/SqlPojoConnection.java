@@ -43,6 +43,8 @@ import java.util.concurrent.Executor;
 @SuppressWarnings("unused")
 public class SqlPojoConnection implements Connection 
 {
+	private boolean closed = false;
+	
 	@Override
 	public PreparedStatement prepareStatement(String sql) throws SQLException {
 		return new SqlPojoPreparedStatement(sql);
@@ -60,6 +62,16 @@ public class SqlPojoConnection implements Connection
         return new SqlPojoDatabaseMetaData();
     }
 
+	@Override
+	public void close() throws SQLException {
+		closed = true;
+		
+	}
+
+	@Override
+	public boolean isClosed() throws SQLException {
+		return closed;
+	}
 
 	// ###########################################################################
 	//                 not   implemented    dummy    methods
@@ -112,18 +124,6 @@ public class SqlPojoConnection implements Connection
 	public void rollback() throws SQLException {
 		if (true) throw new RuntimeException("Not yet implemented!");
 		
-	}
-
-	@Override
-	public void close() throws SQLException {
-		if (true) throw new RuntimeException("Not yet implemented!");
-		
-	}
-
-	@Override
-	public boolean isClosed() throws SQLException {
-		if (true) throw new RuntimeException("Not yet implemented!");
-		return false;
 	}
 
 	@Override

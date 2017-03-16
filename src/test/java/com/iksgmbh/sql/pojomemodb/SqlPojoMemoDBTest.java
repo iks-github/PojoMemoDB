@@ -15,26 +15,34 @@
  */
 package com.iksgmbh.sql.pojomemodb;
 
-import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.statistics.TableStoreStatistics;
-import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.Sequence;
-import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.TableStore;
-import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.SelectionTable;
-import com.iksgmbh.sql.pojomemodb.utils.SqlStatementLoader;
-
-import org.joda.time.DateTime;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLDataException;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
+
+import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.statistics.TableStoreStatistics;
+import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.Sequence;
+import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.TableStore;
+import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.SelectionTable;
+import com.iksgmbh.sql.pojomemodb.utils.SqlStatementLoader;
 
 public class SqlPojoMemoDBTest {
+	
+	private static final SimpleDateFormat DEFAULT_DATE_FORMATTER = new SimpleDateFormat("dd.MM.yyyy");
 	
 	private static final String TEST_CREATE_SQL_FILE = "src/test/resources/create.sql";
 	private static final String TEST_INSERT_SQL_FILE = "src/test/resources/insert.sql";
@@ -371,9 +379,9 @@ public class SqlPojoMemoDBTest {
 		assertEquals("value", "SalesPersonInformation", result.get(0)[1]);
 		assertEquals("value", null, result.get(0)[3]);
 		assertEquals("value", "1", result.get(0)[4].toString());
-		assertEquals("value", getDateAsStringFromDateTime(new DateTime()), getDateAsStringFromDateTime(result.get(0)[5]));
+		assertEquals("value", getDateAsStringFromDate(new Date()), getDateAsStringFromDate(result.get(0)[5]));
 		assertEquals("value", "System", result.get(0)[6]);
-		assertEquals("value", getDateAsStringFromDateTime(new DateTime()), getDateAsStringFromDateTime(result.get(0)[7]));
+		assertEquals("value", getDateAsStringFromDate(new Date()), getDateAsStringFromDate(result.get(0)[7]));
 		assertEquals("value", "System", result.get(0)[8]);
  	}
 	
@@ -382,9 +390,9 @@ public class SqlPojoMemoDBTest {
 	//                           S E L E C T   S T A T E M E N T   T E S T S
 	// #############################################################################################
 
-	private String getDateAsStringFromDateTime(Object object) {
-		final DateTime dt = (DateTime) object;
-		return dt.getDayOfMonth() + "." + dt.getMonthOfYear() + "." + dt.getYear();
+	private String getDateAsStringFromDate(Object object) {
+		final Date d = (Date) object;
+		return DEFAULT_DATE_FORMATTER.format(d);
 	}
 
 	@Test
@@ -499,7 +507,7 @@ public class SqlPojoMemoDBTest {
 		assertEquals("row number", 1, result.size());
 		assertEquals("column number", 4,  result.get(0).length);
 
-		assertEquals("value", "2016-05-15T00:00:00.000+02:00",  "" + result.get(0)[3]);
+		assertEquals("value", "Sun May 15 00:00:00 CEST 2016",  "" + result.get(0)[3]);
 	}
 	
 	@Test
@@ -594,11 +602,11 @@ public class SqlPojoMemoDBTest {
 		assertEquals("first name", "C", "" + result5.get(0)[1]);
 		assertEquals("last name",  "A", "" + result5.get(2)[1]);  // DESC ordered
 
-		assertEquals("first create", "2016-01-20T00:00:00.000+01:00", "" + result6.get(0)[2]);
-		assertEquals("last create",  "2016-03-20T00:00:00.000+01:00", "" + result6.get(2)[2]);  // ASC ordered
+		assertEquals("first create", "Wed Jan 20 00:00:00 CET 2016", "" + result6.get(0)[2]);
+		assertEquals("last create",  "Sun Mar 20 00:00:00 CET 2016", "" + result6.get(2)[2]);  // ASC ordered
 
-		assertEquals("first create", "2016-03-20T00:00:00.000+01:00", "" + result7.get(0)[2]);
-		assertEquals("last create",  "2016-01-20T00:00:00.000+01:00", "" + result7.get(2)[2]);  // DESC ordered
+		assertEquals("first create", "Sun Mar 20 00:00:00 CET 2016", "" + result7.get(0)[2]);
+		assertEquals("last create",  "Wed Jan 20 00:00:00 CET 2016", "" + result7.get(2)[2]);  // DESC ordered
 	}
 
 
@@ -626,10 +634,10 @@ public class SqlPojoMemoDBTest {
 		assertEquals("value", "a new name",  "" + values.get(1)[0]);
 		assertEquals("value", "a new name",  "" + values.get(2)[0]);
 		assertEquals("value", "a new name",  "" + values.get(3)[0]);
-		assertEquals("value", "2016-07-20T00:00:00.000+02:00",  "" + values.get(0)[1]);
-		assertEquals("value", "2016-07-20T00:00:00.000+02:00",  "" + values.get(1)[1]);
-		assertEquals("value", "2016-07-20T00:00:00.000+02:00",  "" + values.get(2)[1]);
-		assertEquals("value", "2016-07-20T00:00:00.000+02:00",  "" + values.get(3)[1]);
+		assertEquals("value", "Wed Jul 20 00:00:00 CEST 2016",  "" + values.get(0)[1]);
+		assertEquals("value", "Wed Jul 20 00:00:00 CEST 2016",  "" + values.get(1)[1]);
+		assertEquals("value", "Wed Jul 20 00:00:00 CEST 2016",  "" + values.get(2)[1]);
+		assertEquals("value", "Wed Jul 20 00:00:00 CEST 2016",  "" + values.get(3)[1]);
 	}
 	
 	@Test
@@ -649,7 +657,7 @@ public class SqlPojoMemoDBTest {
 		final List<Object[]> values = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement)).getDataRows();
 		
 		assertEquals("value", "a new name",  "" + values.get(0)[0]);
-		assertEquals("value", "2016-07-20T00:00:00.000+02:00",  "" + values.get(0)[1]);
+		assertEquals("value", "Wed Jul 20 00:00:00 CEST 2016",  "" + values.get(0)[1]);
 	}
 	
 	@Test
@@ -907,6 +915,67 @@ public class SqlPojoMemoDBTest {
 	// #############################################################################################
 
 	@Test
+	@Ignore // still to be implemented
+	public void throwsExceptionForInsertValuesExceedingMaxLength() throws SQLException
+	{
+		// arrange
+		final String createTableStatement = "create table TABLE_NAME (id Number(2), name varchar(5), amount Number(2,2))";
+		SqlPojoMemoDB.execute( createTableStatement );
+		
+		final String insertStatement1 = "insert into TABLE_NAME (id) values (123)";
+		final String insertStatement2 = "insert into TABLE_NAME (name) values ('abc')";
+		final String insertStatement3 = "insert into TABLE_NAME (amount) values (110.123)";
+
+        // act1
+        try {
+            SqlPojoMemoDB.execute(insertStatement1);
+            fail("Expected exception was not thrown!");
+        } catch (Exception e) {
+            // assert
+            assertEquals("Error message", "", e.getMessage());
+        }
+        
+        // act2
+        try {
+            SqlPojoMemoDB.execute(insertStatement2);
+            fail("Expected exception was not thrown!");
+        } catch (Exception e) {
+            // assert
+            assertEquals("Error message", "", e.getMessage());
+        }
+        
+        // act3
+        try {
+            SqlPojoMemoDB.execute(insertStatement3);
+            fail("Expected exception was not thrown!");
+        } catch (Exception e) {
+            // assert
+            assertEquals("Error message", "", e.getMessage());
+        }
+	}
+
+	@Test
+	public void savesAndLoadsWithBooleanType() throws SQLException
+	{
+		// arrange
+		final String createTableStatement = "create table TABLE_NAME (testColumn BOOLEAN)";
+		final String insertStatement1 = "insert into TABLE_NAME (testColumn) values (TRue)";
+		final String insertStatement2 = "insert into TABLE_NAME (testColumn) values (false)";
+		final String selectStatement =  "select * from TABLE_NAME";
+
+		// act
+		SqlPojoMemoDB.execute( createTableStatement );
+		SqlPojoMemoDB.execute( insertStatement1 );
+		SqlPojoMemoDB.execute( insertStatement2 );
+		final List<Object[]> result = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement)).getDataRows();
+		
+		// assert
+		assertEquals("column number", "true",  result.get(0)[0].toString());
+		assertEquals("column number", "false",  result.get(1)[0].toString());
+	}
+
+	
+	@Test
 	public void understandsLowerAndUpperCaseInStatements() throws SQLException
 	{
 		// arrange
@@ -923,22 +992,6 @@ public class SqlPojoMemoDBTest {
 		assertEquals("row number", 1, result.size());
 		assertEquals("column number", 2,  result.get(0).length);
 	}
-
-    @Test
-    public void handlesUnexpectedProblem_nonsenseColumnType() throws SQLException
-    {
-        // arrange
-        final String createTableStatement = "create table X (ID Number(5) unique primary not null)";
-
-        // act
-        try {
-            SqlPojoMemoDB.execute(createTableStatement);
-            fail("Expected exception was not thrown!");
-        } catch (Exception e) {
-            // assert
-            assertEquals("Error message", "Unparsable column type 'NUMBER(5)  PRIMARY'. Concerned column: 'ID'.", e.getMessage());
-        }
-    }
 
     @Test
     public void handlesUnexpectedProblem_invalidMaximumLength() throws SQLException

@@ -20,7 +20,6 @@ import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.OrderCondition;
 import com.iksgmbh.sql.pojomemodb.sqlparser.SqlPojoMemoParser;
 import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil;
 import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.InterimParseResult;
-import org.apache.commons.lang3.StringUtils;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -40,7 +39,7 @@ public class OrderConditionParser extends SqlPojoMemoParser
 	// TODO mehere conditions mit asc, desc testen
 	public List<OrderCondition> parseConditions(final String orderClause) throws SQLException
 	{
-		if (StringUtils.isEmpty(orderClause))
+		if (StringParseUtil.isEmpty(orderClause))
 			throw new SQLException("No column defined for order by!");
 
 		String unparsedRest = orderClause;

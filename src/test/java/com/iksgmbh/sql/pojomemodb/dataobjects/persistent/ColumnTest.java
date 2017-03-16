@@ -15,35 +15,45 @@
  */
 package com.iksgmbh.sql.pojomemodb.dataobjects.persistent;
 
-import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.ColumnInitData;
-import org.joda.time.DateTime;
-import org.junit.Before;
+import static org.junit.Assert.assertEquals;
+
+import java.math.BigDecimal;
+import java.sql.SQLDataException;
+import java.util.Date;
+
 import org.junit.Test;
 
-import java.sql.SQLDataException;
-
-import static org.junit.Assert.assertEquals;
+import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.ColumnInitData;
 
 public class ColumnTest 
 {
-	private Column sut;
-	
-	@Before
-	public void setup() throws SQLDataException {
-		sut = new Column(createColumnInitData("Test", "Date"), 1, null);
-	}
 	
 	@Test
 	public void applies_to_date_function() throws SQLDataException {
 
 		// arrange
+		Column sut = new Column(createColumnInitData("Test", "Date"), 1, null);
 		final String valueAsString = "to_date('15.05.16','DD.MM.RR')";
 		
 		// act
-		final DateTime result = (DateTime) sut.convertIntoColumnType(valueAsString);
+		final Date result = (Date) sut.convertIntoColumnType(valueAsString);
 		
 		// assert
-		assertEquals("date value", "2016-05-15T00:00:00.000+02:00", result.toString());
+		assertEquals("date value", "Sun May 15 00:00:00 CEST 2016", result.toString());
+	}
+	
+	@Test
+	public void acceptsMaxLengthValuesForMysqlTypes() throws SQLDataException {
+
+		// arrange
+		Column sut = new Column(createColumnInitData("Test", "int(4)"), 1, null);
+		final String valueOK = "1234";
+		
+		// act
+		final BigDecimal result = (BigDecimal) sut.convertIntoColumnType(valueOK);
+		
+		// assert
+		assertEquals("date value", "1234", result.toPlainString());
 	}
 
     private ColumnInitData createColumnInitData(String colName, String colType) {

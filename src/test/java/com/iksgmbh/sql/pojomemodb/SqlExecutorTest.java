@@ -22,16 +22,19 @@ import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.Table;
 import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.ColumnInitData;
 import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.JoinTable;
 import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.OrderCondition;
+import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.SelectionTable;
 import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.WhereCondition;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.math.BigDecimal;
 import java.sql.SQLDataException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 public class SqlExecutorTest {
@@ -41,7 +44,59 @@ public class SqlExecutorTest {
 	
 	@Before
 	public void setup() {
+		DbProperties.SUPPORT_MYSQL=true;
 		SqlPojoMemoDB.reset();
+	}
+	
+	@Test
+	public void buildsSelectionTableForMysqlNextId() throws SQLException 
+	{
+		// arrange
+		final String selectStatement = "select NextId(\"testmodell\")";
+		SqlPojoMemoDB.execute("CREATE TABLE testmodell (ID int PRIMARY KEY NOT NULL)");
+		SqlPojoMemoDB.execute("insert into testmodell (ID) values (5)");
+		
+		// act		
+		SelectionTable result = (SelectionTable) sut.executeSqlStatement(selectStatement);
+		
+		// arrange
+		assertNotNull(result);
+		BigDecimal nextId= (BigDecimal) result.getDataRows().get(0)[0];
+		assertEquals(6, nextId.intValue());
+	}
+	
+	@Test
+	public void throwsExceptionForMissingPrimaryKeyColumnForMysqlNextId() throws SQLException 
+	{
+		// arrange
+		final String selectStatement = "select NextId(\"testmodell\")";
+		SqlPojoMemoDB.execute("CREATE TABLE testmodell (ID int NOT NULL)");
+		SqlPojoMemoDB.execute("insert into testmodell (ID) values (5)");	
+		
+		try {
+			// act			
+			sut.executeSqlStatement(selectStatement);	
+			fail("Expected exception was not thrown!");
+		} catch (SQLDataException e) {			
+			assertEquals("Error message", "No primary key column found in table 'testmodell'.", e.getMessage());
+		}
+	}	
+	
+	@Test
+	public void throwsExceptionForNonNumberPrimaryKeyColumnForMysqlNextId() throws SQLException 
+	{
+		// arrange
+		final String selectStatement = "select NextId(\"testmodell\")";
+		SqlPojoMemoDB.execute("CREATE TABLE testmodell (ID varchar(10) PRIMARY KEY NOT NULL)");
+		SqlPojoMemoDB.execute("insert into testmodell (ID) values ('a')");	
+		
+		try {
+			// act			
+			sut.executeSqlStatement(selectStatement);	
+			fail("Expected exception was not thrown!");
+		} catch (SQLDataException e) {			
+			assertEquals("Error message", "Primary key of table 'testmodell' is no number.", e.getMessage());
+		}
 	}
 	
 	@Test

@@ -45,6 +45,10 @@ public abstract class SqlPojoMemoParser
 		return parseNextValue(toReturn, SPACE);
 	}
 
+	protected String removeSurroundingParentheses(String value) throws SQLException 
+	{
+		return StringParseUtil.removeSurroundingPrefixAndPostFix(value, "(", ")");
+	}
 
 	protected String removeSurroundingQuotes(String value) throws SQLException 
 	{

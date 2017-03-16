@@ -15,6 +15,19 @@
  */
 package com.iksgmbh.sql.pojomemodb.sqlparser;
 
+import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.CONSTRAINT;
+import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.PRIMARY_KEY;
+import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.UNIQUE;
+import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.USING_INDEX;
+import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.CLOSING_PARENTHESIS;
+import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.COMMA;
+import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.OPENING_PARENTHESIS;
+import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.SPACE;
+import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.parseNextValue;
+
+import java.sql.SQLDataException;
+import java.sql.SQLException;
+
 import com.iksgmbh.sql.pojomemodb.SQLKeyWords;
 import com.iksgmbh.sql.pojomemodb.SqlPojoMemoDB;
 import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.metadata.TableMetaData;
@@ -22,14 +35,7 @@ import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.Column;
 import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.Table;
 import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.ColumnInitData;
 import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil;
-import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.*;
-import org.apache.commons.lang3.StringUtils;
-
-import java.sql.SQLDataException;
-import java.sql.SQLException;
-
-import static com.iksgmbh.sql.pojomemodb.SQLKeyWords.*;
-import static com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.*;
+import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil.InterimParseResult;
 
 public class CreateTableParser extends SqlPojoMemoParser
 {
@@ -108,7 +114,7 @@ public class CreateTableParser extends SqlPojoMemoParser
         String toReturn = unparsedRest.substring(CONSTRAINT.length()).trim();
         InterimParseResult parseResult = parseNextValue(toReturn, PRIMARY_KEY);
 
-        if (StringUtils.isEmpty(parseResult.delimiter)) {
+        if (StringParseUtil.isEmpty(parseResult.delimiter)) {
             throw new SQLException("Cannot parse to Primary Key Constraint: " + unparsedRest + " Expected something like 'CONSTRAINT PRIMARY_KEY_ID PRIMARY KEY (COLUMN_NAME)'.");
         }
 
@@ -160,7 +166,7 @@ public class CreateTableParser extends SqlPojoMemoParser
         String toReturn = unparsedRest.substring(CONSTRAINT.length()).trim();
         InterimParseResult parseResult = parseNextValue(toReturn, SPACE+UNIQUE);
 
-        if (StringUtils.isEmpty(parseResult.delimiter)) {
+        if (StringParseUtil.isEmpty(parseResult.delimiter)) {
             throw new SQLException("Cannot parse to Primary Key Constraint: " + unparsedRest + " Expected something like 'CONSTRAINT UNIQUE_ID UNIQUE (COLUMN_NAME)'.");
         }
 
@@ -321,7 +327,7 @@ public class CreateTableParser extends SqlPojoMemoParser
             columnInitData.primaryKey = createDefaultPrimaryConstraintName(columnInitData.columnName);
         }
 
-        if ( ! StringUtils.isEmpty(columnInitData.primaryKey)
+        if ( ! StringParseUtil.isEmpty(columnInitData.primaryKey)
              && columnInitData.nullable) {
             throw new SQLException("Primary Key column '" + columnInitData.columnName + "' must not be set to nullable=true!");
         }
@@ -366,7 +372,7 @@ public class CreateTableParser extends SqlPojoMemoParser
             InterimParseResult parseResult = parseNextValue(columnInitData.columnType, SQLKeyWords.DEFAULT);
             columnInitData.defaultValue = parseResult.unparsedRest;
             columnInitData.columnType = parseResult.parsedValue;
-            if (StringUtils.isEmpty(columnInitData.defaultValue) && ! StringUtils.isEmpty(parseResult.delimiter))
+            if (StringParseUtil.isEmpty(columnInitData.defaultValue) && ! StringParseUtil.isEmpty(parseResult.delimiter))
                 throw new SQLDataException("Missing default value for column '" + columnInitData.columnName + "'!");
         }
     }

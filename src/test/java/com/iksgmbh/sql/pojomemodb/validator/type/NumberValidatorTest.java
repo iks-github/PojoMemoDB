@@ -1,4 +1,4 @@
-package com.iksgmbh.sql.pojomemodb.validator;
+package com.iksgmbh.sql.pojomemodb.validator.type;
 
 import com.iksgmbh.sql.pojomemodb.validator.type.NumberTypeValidator;
 import org.junit.Test;
@@ -25,5 +25,12 @@ public class NumberValidatorTest {
         assertTrue(validator.isValue1SmallerThanValue2(value10, value20));
         assertFalse(validator.isValue1SmallerThanValue2(value20, value10));
         assertNull(validator.isValue1SmallerThanValue2(number3, value20));
+    }
+    
+    @Test
+    public void validatesStringNull() throws SQLDataException
+    {
+        new NumberTypeValidator("NUMBER").validateValueForType("null");
+        // asserted by no exception
     }
 }

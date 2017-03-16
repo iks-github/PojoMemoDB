@@ -24,9 +24,9 @@ import org.junit.Test;
 import com.iksgmbh.sql.pojomemodb.SqlExecutor.ParsedUpdateData;
 
 
-public class UpdateParserTest {
+public class UpdateTableParserTest {
 	
-	private UpdateParser sut = new UpdateParser(null);
+	private UpdateTableParser sut = new UpdateTableParser(null);
 
 	@Test
 	public void parsesStatementWithWhereCondition() throws SQLException

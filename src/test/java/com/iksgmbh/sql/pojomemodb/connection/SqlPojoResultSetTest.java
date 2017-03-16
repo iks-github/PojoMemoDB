@@ -15,41 +15,81 @@
  */
 package com.iksgmbh.sql.pojomemodb.connection;
 
-import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.Table;
-import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.SelectionTable;
-import org.joda.time.DateTime;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.math.BigDecimal;
-import java.sql.Date;
 import java.sql.SQLDataException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import org.junit.Before;
+import org.junit.Test;
+
+import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.Table;
+import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.ColumnInitData;
+import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.SelectionTable;
 
 public class SqlPojoResultSetTest 
 {
+	private SqlPojoResultSet cut;
+	private List<Object[]> list = new ArrayList<Object[]>();
 
-    private SqlPojoResultSet createCut(final List<Object[]> dataRows) throws SQLDataException
-    {
-        final Table table = new Table("TestTable");
-        final SelectionTable selectionTable = new SelectionTable(table, new ArrayList<String>());
-        selectionTable.setDataRows(dataRows);
-        return new SqlPojoResultSet(selectionTable);
-    }
+	@Before
+	public void setup() throws SQLDataException {
+		cut = createCut(list);
+	}
+    
+	@Test
+	public void closesResultSet() throws Exception 
+	{
+        // act
+        boolean result1 = cut.isClosed();
+        cut.close();
+        boolean result2 = cut.isClosed();
+        
+		// assert
+		assertFalse("false expected", result1);
+		assertTrue("true expected", result2);
+	}
 
+	@Test
+	public void returnsTrueOnFirst() throws Exception 
+	{
+        // arrange
+		Object[] datarow = new Object[1];
+		String testContent = "TestContent";
+		datarow[0] = testContent;
+		list.add( datarow );
+		cut = createCut(list);
 
+		// act
+		boolean result = cut.first();
+		Object object = cut.getObject(1);
+		
+		// assert
+		assertTrue("true expected", result);
+		assertEquals(testContent, object);
+	}
+	
+	@Test
+	public void returnsFalseOnFirstForNullResult() throws Exception 
+	{
+		// act
+		boolean result = cut.first();
+		
+		// assert
+		assertFalse("false expected", result);
+	}
+	
+	
 	@Test
 	public void returnsFalseOnNextForNullResult() throws Exception 
 	{
-        // arrange
-        final List<Object[]> list = new ArrayList<Object[]>();
-        final SqlPojoResultSet cut = createCut(list);
-
 		// act
 		boolean next = cut.next();
-		cut.close();
 		
 		// assert
 		assertFalse("false expected", next);
@@ -59,13 +99,8 @@ public class SqlPojoResultSetTest
 	@Test
 	public void returnsFalseOnNextForEmptyResult() throws Exception 
 	{
-        // arrange
-        final List<Object[]> list = new ArrayList<Object[]>();
-        final SqlPojoResultSet cut = createCut(list);
-
         // act
 		boolean next = cut.next();
-		cut.close();
 		
 		// assert
 		assertFalse("false expected", next);
@@ -76,15 +111,11 @@ public class SqlPojoResultSetTest
 	public void returnsTrueOnNextForNonEmptyResult() throws Exception 
 	{
 		// arrange
-		final List<Object[]> list = new ArrayList<Object[]>();
-		final Object[] dataset = new Object[1];
-		list.add(dataset);
+		list.add(new Object[1]);
         final SqlPojoResultSet cut = createCut(list);
-
 
         // act
 		boolean next = cut.next();
-		cut.close();
 		
 		// assert
 		assertTrue("true expected", next);
@@ -94,13 +125,9 @@ public class SqlPojoResultSetTest
 	public void returnsTrueOnNextExceptEndOfList() throws Exception 
 	{
 		// arrange
-		final List<Object[]> list = new ArrayList<Object[]>();
-		final Object[] dataset1 = new Object[1];
-		list.add(dataset1);
-		final Object[] dataset2 = new Object[1];
-		list.add(dataset2);
-		final Object[] dataset3 = new Object[1];
-		list.add(dataset3);
+		list.add(new Object[1]);
+		list.add(new Object[1]);
+		list.add(new Object[1]);
         final SqlPojoResultSet cut = createCut(list);
 
 		// act
@@ -108,7 +135,6 @@ public class SqlPojoResultSetTest
 		boolean next2 = cut.next();
 		boolean next3 = cut.next();
 		boolean next4 = cut.next();
-		cut.close();
 		
 		// assert
 		assertTrue("true expected", next1);
@@ -121,9 +147,8 @@ public class SqlPojoResultSetTest
 	public void returnsCorrectTypeSpecificValues() throws Exception 
 	{
 		// arrange
-		final List<Object[]> list = new ArrayList<Object[]>();
 		final Object[] dataset1 = new Object[1];
-		dataset1[0] = new DateTime();
+		dataset1[0] = new Date();
 		list.add(dataset1);
 		final Object[] dataset2 = new Object[1];
 		dataset2[0] = BigDecimal.ZERO;
@@ -140,12 +165,23 @@ public class SqlPojoResultSetTest
 		long l = cut.getLong(1);
 		cut.next();
 		String s = cut.getString(1);
-		cut.close();
 		
 		// assert
-		assertEquals("field content", ((DateTime)dataset1[0]).getMillis(), d.getTime());
+		assertEquals("field content", dataset1[0], d);
 		assertEquals("field content", ((BigDecimal)dataset2[0]).toPlainString(), ""+l);
 		assertEquals("field content", dataset3[0], s);
 	}
-	
+
+    private SqlPojoResultSet createCut(final List<Object[]> dataRows) throws SQLDataException
+    {
+        final Table table = new Table("TestTable");
+        final ColumnInitData columnInitData = new ColumnInitData("TestCol");
+        columnInitData.columnType = "VARCHAR(100)";
+		table.createNewColumn(columnInitData, null);
+        ArrayList<String> sortedColumnNames = new ArrayList<String>();
+        sortedColumnNames.add("TestCol");
+		final SelectionTable selectionTable = new SelectionTable(table, sortedColumnNames);
+        selectionTable.setDataRows(dataRows);
+        return new SqlPojoResultSet(selectionTable);
+    }
 }

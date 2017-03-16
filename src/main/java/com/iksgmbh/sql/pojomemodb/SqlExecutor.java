@@ -15,18 +15,30 @@
  */
 package com.iksgmbh.sql.pojomemodb;
 
-import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.data.TableData;
-import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.metadata.TableMetaData;
-import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.Sequence;
-import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.Table;
-import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.*;
-import com.iksgmbh.sql.pojomemodb.sqlparser.*;
-import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil;
-
+import java.math.BigDecimal;
 import java.sql.SQLDataException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.data.TableData;
+import com.iksgmbh.sql.pojomemodb.dataobjects.interfaces.metadata.TableMetaData;
+import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.Column;
+import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.Sequence;
+import com.iksgmbh.sql.pojomemodb.dataobjects.persistent.Table;
+import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.ApartValue;
+import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.ColumnInitData;
+import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.JoinTable;
+import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.OrderCondition;
+import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.SelectionTable;
+import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.WhereCondition;
+import com.iksgmbh.sql.pojomemodb.sqlparser.CreateSequenceParser;
+import com.iksgmbh.sql.pojomemodb.sqlparser.CreateTableParser;
+import com.iksgmbh.sql.pojomemodb.sqlparser.DeleteTableParser;
+import com.iksgmbh.sql.pojomemodb.sqlparser.InsertIntoParser;
+import com.iksgmbh.sql.pojomemodb.sqlparser.SelectParser;
+import com.iksgmbh.sql.pojomemodb.sqlparser.UpdateTableParser;
+import com.iksgmbh.sql.pojomemodb.utils.StringParseUtil;
 
 public class SqlExecutor 
 {
@@ -36,7 +48,7 @@ public class SqlExecutor
 	private CreateTableParser createTableParser;
 	private InsertIntoParser insertIntoParser;
 	private SelectParser selectParser;
-	private UpdateParser updateParser;
+	private UpdateTableParser updateParser;
 	private DeleteTableParser deleteParser;
 	private CreateSequenceParser createSequenceParser;
 	
@@ -46,7 +58,7 @@ public class SqlExecutor
 		createTableParser = new CreateTableParser(sqlPojoMemoryDB);
 		insertIntoParser = new InsertIntoParser(sqlPojoMemoryDB);
 		selectParser = new SelectParser(sqlPojoMemoryDB);
-		updateParser = new UpdateParser(sqlPojoMemoryDB);
+		updateParser = new UpdateTableParser(sqlPojoMemoryDB);
 		deleteParser = new DeleteTableParser(sqlPojoMemoryDB);
 		createSequenceParser = new CreateSequenceParser(sqlPojoMemoryDB);
 	}
@@ -146,6 +158,11 @@ public class SqlExecutor
 	private SelectionTable executeSelectStatement(final String sql) throws SQLException 
 	{
 		final ParsedSelectData parseResult = selectParser.parseSelectSql(sql);
+		
+		if (parseResult.mysqlNextIdTable != null) {
+			return buildSelectionTableForMysqlNextId(parseResult.mysqlNextIdTable);
+		}
+		
         final TableData tableData;
         final List<Object[]> selectedData;
 
@@ -172,6 +189,52 @@ public class SqlExecutor
         return toReturn;
 	}
 	
+	private SelectionTable buildSelectionTableForMysqlNextId(final String mysqlNextIdTable) throws SQLDataException 
+	{
+		final Table tmpTable = new Table("MysqlNextIdTable");
+        final ColumnInitData columnInitData = new ColumnInitData("nextId");
+        columnInitData.columnType = "Number";
+        tmpTable.createNewColumn(columnInitData, memoryDb);
+		
+        final ArrayList<String> sortedColumnNames = new ArrayList<String>();
+        sortedColumnNames.add("nextId");
+        
+		final SelectionTable selectionTable = new SelectionTable(tmpTable, sortedColumnNames);
+		final List<Object[]> dataRows = new ArrayList<Object[]>();
+		final Object[] dataset1 = new Object[1];
+		final Table table = (Table) memoryDb.getTableStoreData().getTableData(mysqlNextIdTable);
+		final List<String> namesOfColumns = table.getNamesOfColumns();
+		long maxValue = 0;
+		boolean primaryKeyFound = false;
+		for (String columnName : namesOfColumns) {
+			Column column = table.getColumn(columnName);
+			String primaryKeyId = column.getPrimaryKeyId();
+			if (primaryKeyId != null) 
+			{
+				primaryKeyFound = true;
+				List<Object[]> existingData = table.getDataRows();
+				for (Object[] dataRow : existingData) 
+				{
+					Object value = dataRow[column.getOrderNumber() - 1];
+					if (value instanceof BigDecimal) {
+						Long longValue = ((BigDecimal)value).longValue();
+						if (longValue > maxValue) maxValue = longValue;						
+					} else {
+						throw new SQLDataException("Primary key of table '" + mysqlNextIdTable + "' is no number.");
+					}
+				}
+			}
+		}
+		if ( ! primaryKeyFound) {
+			throw new SQLDataException("No primary key column found in table '" + mysqlNextIdTable + "'.");
+		}
+		dataset1[0] = new BigDecimal("" + (maxValue + 1));
+		dataRows.add(dataset1);
+        selectionTable.setDataRows(dataRows);
+        
+		return selectionTable;
+	}
+
 	TableData buildJoinTable(final ParsedSelectData parseResult) throws SQLDataException 
 	{
 		final JoinTable joinTable = new JoinTable(memoryDb, parseResult.tableNames.get(0));
@@ -285,6 +348,7 @@ public class SqlExecutor
 		public List<String> selectedColumns;
 		public List<WhereCondition> whereConditions;
 		public List<OrderCondition> orderConditions;
+		public String mysqlNextIdTable;
 		
 		public ParsedSelectData(final List<String> tableNames, 
 				                final List<String> selectedColumns, 
@@ -306,7 +370,15 @@ public class SqlExecutor
 			tableNames.add(tableName);
 			this.selectedColumns = selectedColumns;
 			this.whereConditions = whereConditions;
-		}	}
+		}	
+		
+		public ParsedSelectData(final String mysqlNextIdTable) 
+		{
+			this.mysqlNextIdTable = mysqlNextIdTable;
+		}	
+		
+		
+	}
 	
 	public static class TableId 
 	{
