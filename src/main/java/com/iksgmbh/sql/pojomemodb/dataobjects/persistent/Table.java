@@ -189,14 +189,18 @@ public class Table implements TableStatistics, TableMetaData, TableData
 	}
 
 	@Override
-	public List<Object[]> select(final List<String> selectedColumns,
+	public List<Object[]> select(List<String> selectedColumns,
 								 final List<WhereCondition> whereConditions,
 								 final List<OrderCondition> orderConditions) throws SQLDataException
 	{
+		if (selectedColumns == null) {
+			selectedColumns = getNamesOfColumns();
+		}
+		
 		final List<Object[]> tableData = createDataRowsClone();
 		applySqlFunctions(tableData, selectedColumns);
 		List<Object[]> selectedDataRows = selectDataRows(whereConditions, tableData).selectedRows;
-		selectedDataRows = orderBy(selectedDataRows, orderConditions);
+		selectedDataRows = orderBy(selectedDataRows, orderConditions);	
 		return removeUnselectedColumns(selectedDataRows, selectedColumns);
 	}
 

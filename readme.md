@@ -25,7 +25,7 @@ Copyright by [IKS GmbH](https://www.iks-gmbh.com)
 
 Licenced under [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0.html)
 
-Current version: **0.0.3**
+Current version: **0.0.5**
 
 * * *
 

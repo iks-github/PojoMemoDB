@@ -44,7 +44,7 @@ public class DualTable extends Table {
 	public List<Object[]> select(final List<String> selectedColumns,
 								 final List<WhereCondition> whereConditions, List<OrderCondition> orderConditions) throws SQLDataException
 	{
-		if (selectedColumns.size() == 0) {
+		if (selectedColumns == null || selectedColumns.size() == 0) {
 			return new ArrayList<Object[]>();
 		}
 

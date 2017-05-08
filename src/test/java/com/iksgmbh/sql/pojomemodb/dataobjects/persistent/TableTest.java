@@ -39,10 +39,34 @@ public class TableTest {
 	public void setup() throws SQLDataException {
 		sut = new Table("Test");
 	}
+
+	@Test
+	public void returnsDataWhenAsterixAndAliasAreUsedInCombination() throws SQLDataException 
+	{
+		// arrange
+        sut.createNewColumn(createColumnInitData("ID", "Number(5)"), null);
+        sut.createNewColumn(createColumnInitData("Name", "VARCHAR(10)"), null);
+        sut.createNewColumn(createColumnInitData("Date", "Date"), null);
+		
+		final List<ApartValue> values = new ArrayList<ApartValue>();
+		ApartValue value = new ApartValue("to_date('15.05.16','DD.MM.RR')", "Date");
+		values.add(value);
+		value = new ApartValue("'Jim'", "Name");
+		values.add(value);
+		value = new ApartValue("1", "ID");
+		values.add(value);
+		sut.insertDataRow(values);
+		
+		// act
+		final List<Object[]> result = sut.select(null, new ArrayList<WhereCondition>(), new ArrayList<OrderCondition>());
+		
+		// assert
+		assertEquals("number of datasets", 1, result.size());
+	}
 	
 	@Test
-	public void applies_to_char_function() throws SQLDataException {
-
+	public void applies_to_char_function() throws SQLDataException 
+	{
 		// arrange
         sut.createNewColumn(createColumnInitData("Column1", "Date"), null);
 		final List<ApartValue> values = new ArrayList<ApartValue>();

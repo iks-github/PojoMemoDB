@@ -142,6 +142,47 @@ public class SqlPojoResultSetTest
 		assertTrue("true expected", next3);
 		assertFalse("false expected", next4);
 	}
+
+	@Test
+	public void returnsTypeSpecificNullValues() throws Exception 
+	{
+		// arrange
+		final Object[] dataset1 = new Object[1];
+		dataset1[0] = null;
+		list.add(dataset1);
+		final Object[] dataset2 = new Object[1];
+		dataset2[0] = null;
+		list.add(dataset2);
+		final Object[] dataset3 = new Object[1];
+		dataset3[0] = null;
+		list.add(dataset3);
+		final Object[] dataset4 = new Object[1];
+		dataset4[0] = null;
+		list.add(dataset4);
+        final SqlPojoResultSet cut = createCut(list);
+
+		// act
+		cut.next();
+		Date d = cut.getDate(1);
+		cut.next();
+		String errorMessage = null;
+		try {
+			cut.getLong(1);
+		} catch (Exception e) {
+			errorMessage = e.getMessage();
+		}
+		
+		cut.next();
+		String s = cut.getString(1);
+		cut.next();
+		BigDecimal bd = cut.getBigDecimal(1);
+		
+		// assert
+		assertEquals("field content", dataset1[0], d);
+		assertEquals("field content", "null value in db cannot be parsed into an long value.", errorMessage);
+		assertEquals("field content", dataset3[0], s);
+		assertEquals("field content", dataset4[0], bd);
+	}
 	
 	@Test
 	public void returnsCorrectTypeSpecificValues() throws Exception 
@@ -151,11 +192,14 @@ public class SqlPojoResultSetTest
 		dataset1[0] = new Date();
 		list.add(dataset1);
 		final Object[] dataset2 = new Object[1];
-		dataset2[0] = BigDecimal.ZERO;
+		dataset2[0] = BigDecimal.ONE;
 		list.add(dataset2);
 		final Object[] dataset3 = new Object[1];
 		dataset3[0] = "test";
 		list.add(dataset3);
+		final Object[] dataset4 = new Object[1];
+		dataset4[0] = BigDecimal.ONE;
+		list.add(dataset4);
         final SqlPojoResultSet cut = createCut(list);
 
 		// act
@@ -165,11 +209,14 @@ public class SqlPojoResultSetTest
 		long l = cut.getLong(1);
 		cut.next();
 		String s = cut.getString(1);
+		cut.next();
+		BigDecimal bd = cut.getBigDecimal(1);
 		
 		// assert
 		assertEquals("field content", dataset1[0], d);
-		assertEquals("field content", ((BigDecimal)dataset2[0]).toPlainString(), ""+l);
+		assertEquals("field content", "1", ""+l);
 		assertEquals("field content", dataset3[0], s);
+		assertEquals("field content", dataset4[0], bd);
 	}
 
     private SqlPojoResultSet createCut(final List<Object[]> dataRows) throws SQLDataException
@@ -184,4 +231,5 @@ public class SqlPojoResultSetTest
         selectionTable.setDataRows(dataRows);
         return new SqlPojoResultSet(selectionTable);
     }
+   
 }

@@ -45,7 +45,7 @@ public class Column implements ColumnStatistics, ColumnMetaData, ColumnData
 	private String defaultValue;
     private String primaryKeyId;
     private String uniqueConstraintId;
-
+    
     public Column(final ColumnInitData columnInitData,
                   final int orderNumber,
 				  final SqlPojoMemoDB memoryDB) throws SQLDataException

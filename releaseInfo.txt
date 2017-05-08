@@ -2,6 +2,7 @@
    - SqlPojoDatabaseMetaData.java
    - readme.md
    - Preparation Steps wiki page (2 times)
+   - pom.xml
 
 2. Maven clean and package project.
 

@@ -58,13 +58,24 @@ public class NumberTypeValidator extends TypeValidator
     {
         if ( value == null ) return; // nullable is not checked here
         if (SQLKeyWords.NULL.equalsIgnoreCase(value.toString())) return;
+        
+        BigDecimal number;
 
         try {
-            convertIntoColumnType( "" + value );
+        	number = (BigDecimal) convertIntoColumnType( "" + value );
         } catch (SQLDataException e) {
             throw new SQLDataException("Value '" + value + "' is not valid");
         }
+        
+        checkMaxLength(number);
     }
+
+	private void checkMaxLength(final BigDecimal number) 
+	{
+		
+		
+	}
+
 
 	@Override
 	public ValidatorType getType() {

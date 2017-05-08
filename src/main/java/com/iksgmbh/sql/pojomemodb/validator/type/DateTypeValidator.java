@@ -31,6 +31,8 @@ public class DateTypeValidator extends TypeValidator
 {
 	private static final ValidatorType VALIDATION_TYPE = ValidatorType.DATE;
 	private static final String DATE_IN_MILLIS = "DATE_IN_MILLIS:";
+	private static final SimpleDateFormat MYSQL_D_SIMPLEDATEFORMAT = new SimpleDateFormat("yyyy-MM-dd");
+	private static final SimpleDateFormat MYSQL_TS_SIMPLEDATEFORMAT = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 
     @Override
     public void validateValueForType(Object value) throws SQLDataException
@@ -69,6 +71,10 @@ public class DateTypeValidator extends TypeValidator
 			return new Date();
 		}
 		
+		if (valueAsString.startsWith("{") && valueAsString.endsWith("}")) {
+			return convertMySqlDateFormats(valueAsString);
+		}
+		
 		if (valueAsString.startsWith(TO_DATE))			{
 			return toDate(valueAsString.substring(TO_DATE.length()));
 		}
@@ -81,6 +87,33 @@ public class DateTypeValidator extends TypeValidator
 		throw new SQLDataException("Insert values '" + valueAsString + "' is no date.");
 	}
 	
+	private Object convertMySqlDateFormats(String valueAsString) throws SQLDataException 
+	{
+
+		try {
+			valueAsString = valueAsString.substring(1, valueAsString.length()-1).trim();
+			
+			if (valueAsString.startsWith("d")) {
+				valueAsString = valueAsString.substring(1).trim();
+				if (valueAsString.startsWith("'") && valueAsString.endsWith("'")) {
+					valueAsString = valueAsString.substring(1, valueAsString.length()-1).trim();
+					return MYSQL_D_SIMPLEDATEFORMAT.parse(valueAsString);
+				}
+			}
+					
+			if (valueAsString.startsWith("ts")) {
+				valueAsString = valueAsString.substring(2).trim();
+				if (valueAsString.startsWith("'") && valueAsString.endsWith("'")) {
+					valueAsString = valueAsString.substring(1, valueAsString.length()-1).trim();
+					return MYSQL_TS_SIMPLEDATEFORMAT.parse(valueAsString);
+				}
+			}
+		} catch (Exception pe) {
+			// do nothing here, handle exception below
+		}
+		
+		throw new SQLDataException("Insert values '" + valueAsString + "' cannot be parsed into a date.");
+	}
 	private Date toDate(String dateString) throws SQLDataException 
 	{
 		try {

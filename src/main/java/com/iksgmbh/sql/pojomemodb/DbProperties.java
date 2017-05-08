@@ -17,7 +17,6 @@ package com.iksgmbh.sql.pojomemodb;
 
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
 import java.util.Properties;
 
 /**
@@ -40,11 +39,15 @@ public class DbProperties {
     public static int load()
     {
         final File propertiesFile = new File(PROPERTIES_FILE_NAME);
+        
+        /* is this needed ?
         try {
             System.out.println(propertiesFile.getCanonicalFile());
         } catch (IOException e) {
             e.printStackTrace();
         }
+        */
+        
         try {
             if (propertiesFile.exists())
             {

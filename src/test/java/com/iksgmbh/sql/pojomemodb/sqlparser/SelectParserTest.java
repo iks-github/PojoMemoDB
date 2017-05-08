@@ -28,6 +28,39 @@ import static org.junit.Assert.fail;
 public class SelectParserTest
 {	
 	private SelectParser sut = new SelectParser(null);	
+
+	@Test
+	public void parsesSelectStatementForAllColumnsWithAlias() throws SQLException 
+	{
+		// arrange (statement 1 contains table alias with a value that is a prefix of a another one !)
+	    final String selectStatement1 = "select a.* from Table1 a join Table2 ta on (a.ID = ta.ID) join Table3 tab on (ta.ID = tab.ID) where tab.name = null and ta.name = null";
+		final String selectStatement2 = "select m.* from modell m  where m.name = null";
+		
+		// act
+		final ParsedSelectData result1 = sut.parseSelectSql(selectStatement1);
+		final ParsedSelectData result2 = sut.parseSelectSql(selectStatement2);
+		
+		// assert
+		assertEquals("tableName", "TABLE1", result1.tableNames.get(0));
+		assertEquals("tableName", "MODELL", result2.tableNames.get(0));
+	}	
+
+	@Test
+	public void throwsExceptionForUnknownAliasWithWithColumns() throws SQLException 
+	{
+		// arrange
+	    final String selectStatement = "select  n.* from modell m  where m.name = null";
+		
+		try {
+			// act
+			sut.parseSelectSql(selectStatement);
+			fail("Expected exception was not thrown!");
+		} catch (Exception e) {
+			// assert
+			assertEquals("Error message", "Column information: <n.*> is not parseable!", e.getMessage());
+		}
+	}	
+	
 	
 	@Test
 	public void parsesSelectStatementForNextSequenceValueInMySqlDialect() throws SQLException 

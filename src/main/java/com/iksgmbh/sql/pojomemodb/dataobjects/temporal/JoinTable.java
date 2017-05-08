@@ -37,27 +37,42 @@ public class JoinTable extends Table
 		memoryDb = aMemoryDb;
 		
 		final Table table = (Table) memoryDb.getTableStoreData().getTableData(firstTableName);
-		addColumnsFromTable(table);
+		addColumnsFromDataTable(table);
 		setDataRows(table.getDataRows());
 	}
 
-	private void addColumnsFromTable(final Table table) throws SQLDataException {
+	public JoinTable(JoinTable joinTable, String buildJoinTableName) throws SQLDataException 
+	{
+		super(buildJoinTableName);
+		addColumnsFromJoinTable(joinTable);
+		setDataRows(joinTable.getDataRows());
+	}
+
+	private void addColumnsFromDataTable(final Table table) throws SQLDataException 
+	{
 		final List<String> namesOfColumns = table.getNamesOfColumns();
 		
 		for (String columnName : namesOfColumns)
         {
 			final Column column = table.getColumn(columnName);
-            final ColumnInitData columnInitData = new ColumnInitData(table.getTableName() + "." + columnName);
-
-            columnInitData.columnType = column.getColumnType();
-            columnInitData.nullable = column.isNullable();
-            columnInitData.primaryKey = column.getPrimaryKeyId();
-            columnInitData.uniqueKey = column.getUniqueConstraintId();
-
+            final ColumnInitData columnInitData = new ColumnInitData(column);
+            columnInitData.columnName = table.getTableName() + "." + columnName;
             createNewColumn(columnInitData, memoryDb);
 		}
 	}
 
+	private void addColumnsFromJoinTable(final JoinTable joinTable) throws SQLDataException 
+	{
+		final List<String> namesOfColumns = joinTable.getNamesOfColumns();
+		
+		for (String columnName : namesOfColumns)
+        {
+			final Column column = joinTable.getColumn(columnName);
+            final ColumnInitData columnInitData = new ColumnInitData(column);
+            createNewColumn(columnInitData, memoryDb);
+		}
+	}
+	
 	/**
 	 * Joins the current content of the JoinTable instance with another new table
 	 * defined by the two columnIDs in the joinCondition.
@@ -120,7 +135,7 @@ public class JoinTable extends Table
 		final String newTableName = splitResult[0];
 		final String joinColumnOfNewTable = splitResult[1];
 		final Table table = (Table) memoryDb.getTableStoreData().getTableData(newTableName);
-		addColumnsFromTable(table);
+		addColumnsFromDataTable(table);
 		setDataRows( createJoinedDataRows(table, joinColumnOfNewTable, knownColumnId) );
 	}
 

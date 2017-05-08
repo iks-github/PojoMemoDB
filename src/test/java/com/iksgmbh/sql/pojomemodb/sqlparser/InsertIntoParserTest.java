@@ -27,6 +27,20 @@ public class InsertIntoParserTest {
 
 	private InsertIntoParser sut = new InsertIntoParser(null);
 
+	@Test
+	public void parsesMysqlDateValues() throws SQLException 
+	{
+		// arrange
+		final String insertStatement = "insert into TEST_TABLE_NAME (TIMESTAMP, DATE) VALUES (ts '2013-12-15 08:25:15'}, {d '2099-12-31'})";
+		
+		// act
+		final ParsedInsertData result = sut.parseInsertStatement(insertStatement);
+		
+		// assert
+		assertEquals("date value", "ts '2013-12-15 08:25:15'}", result.dataValues.get(0));
+		assertEquals("date value", "{d '2099-12-31'}",  result.dataValues.get(1));
+ 	}
+	
 	
 	@Test
 	public void parsesInsertData() throws SQLException 

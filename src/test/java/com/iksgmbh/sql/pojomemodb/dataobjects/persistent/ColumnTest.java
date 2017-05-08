@@ -27,6 +27,35 @@ import com.iksgmbh.sql.pojomemodb.dataobjects.temporal.ColumnInitData;
 
 public class ColumnTest 
 {
+
+	@Test
+	public void applies_mysql_ts_function() throws SQLDataException {
+
+		// arrange
+		Column sut = new Column(createColumnInitData("Test", "Date"), 1, null);
+		final String valueAsString = "{ts '2013-12-15 08:25:15'}";
+		
+		// act
+		final Date result = (Date) sut.convertIntoColumnType(valueAsString);
+		
+		// assert
+		assertEquals("date value", "Sun Dec 15 08:25:15 CET 2013", result.toString());
+	}
+	
+	@Test
+	public void applies_mysql_d_function() throws SQLDataException {
+
+		// arrange
+		Column sut = new Column(createColumnInitData("Test", "Date"), 1, null);
+		final String valueAsString = "{d '2099-12-31'}";
+		
+		// act
+		final Date result = (Date) sut.convertIntoColumnType(valueAsString);
+		
+		// assert
+		assertEquals("date value", "Thu Dec 31 00:00:00 CET 2099", result.toString());
+	}
+	
 	
 	@Test
 	public void applies_to_date_function() throws SQLDataException {

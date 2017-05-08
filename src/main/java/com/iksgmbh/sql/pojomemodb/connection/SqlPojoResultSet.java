@@ -126,7 +126,7 @@ public class SqlPojoResultSet implements ResultSet
 		try {
 			final Date date = (Date) selectedData.get(resultCursorPosition)[columnOrderNumber-1];
 			if (date == null) {
-				throw new NullPointerException("null value in db cannot be parsed into an Date value.");
+				return null;
 			}
 			return new java.sql.Date(date.getTime());
 		} catch (ClassCastException e) {
@@ -224,7 +224,7 @@ public class SqlPojoResultSet implements ResultSet
 		try {
 			final BigDecimal decimal = (BigDecimal) selectedData.get(resultCursorPosition)[columnOrderNumber-1];
 			if (decimal == null) {
-				throw new NullPointerException("null value in db cannot be parsed into an long value.");
+				return null;
 			}
 			return decimal;
 		} catch (ClassCastException e) {

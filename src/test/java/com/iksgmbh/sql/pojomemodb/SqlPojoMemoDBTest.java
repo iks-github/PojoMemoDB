@@ -816,7 +816,6 @@ public class SqlPojoMemoDBTest {
 	//                                   J o i n    T E S T S
 	// #############################################################################################
 
-
 	@Test
 	public void joins_Two_TablesUsingNonAnsiSyntax() throws SQLException
 	{
@@ -850,7 +849,7 @@ public class SqlPojoMemoDBTest {
 	{
 		// arrange
 		createDb_Join_SmallTestContent();
-		final String selectStatement = "select T3.Name, T2.Responsible, T1.CreationDate from TEST_TABLE_NAME_1 T1, TEST_TABLE_NAME_2 T2, TEST_TABLE_NAME_2 T3  where T1.ID=T2.ID and T2.Name=T3.Name";
+		final String selectStatement = "select T3.Name, T2.Responsible, T1.CreationDate from TEST_TABLE_NAME_1 T1, TEST_TABLE_NAME_2 T2, TEST_TABLE_NAME_3 T3  where T1.ID=T2.ID and T2.Name=T3.Name";
 
 		// act
 		final List<Object[]> result = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement)).getDataRows();
@@ -910,12 +909,25 @@ public class SqlPojoMemoDBTest {
 	}
 
 
+	@Test
+	public void joinsTablesAndUsesAsterixWithAlias() throws SQLException
+	{
+		// arrange
+		createDb_Join_SmallTestContent();
+		final String selectStatement = "select t3.* from TEST_TABLE_NAME_1 T1, TEST_TABLE_NAME_2 T2, TEST_TABLE_NAME_3 T3  where T1.ID=T2.ID and T2.Name=T3.Name";
+
+		// act
+		final List<Object[]> result = ((SelectionTable) SqlPojoMemoDB.execute(selectStatement)).getDataRows();
+		//assert
+		assertEquals("column number", 2,  result.get(0).length);
+	}
+	
 	// #############################################################################################
 	//                                   M I S C    T E S T S
 	// #############################################################################################
 
 	@Test
-	@Ignore // still to be implemented
+	@Ignore
 	public void throwsExceptionForInsertValuesExceedingMaxLength() throws SQLException
 	{
 		// arrange

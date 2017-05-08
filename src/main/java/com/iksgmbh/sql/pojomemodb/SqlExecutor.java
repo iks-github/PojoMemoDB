@@ -165,28 +165,44 @@ public class SqlExecutor
 		
         final TableData tableData;
         final List<Object[]> selectedData;
+        final List<String> selectedColumns = parseResult.selectedColumns;
 
         if (parseResult.tableNames.size() == 1)
 		{
 			// simple select for a single table
 			tableData = memoryDb.getTableStoreData().getTableData(parseResult.tableNames.get(0));
-			
-			if (parseResult.selectedColumns == null) {
-				parseResult.selectedColumns = tableData.getNamesOfColumns();
-			}
-
-            selectedData = tableData.select(parseResult.selectedColumns, parseResult.whereConditions, parseResult.orderConditions);
+            selectedData = tableData.select(selectedColumns, parseResult.whereConditions, parseResult.orderConditions);
 		}
         else // build join table and select on it
         {
             tableData = buildJoinTable(parseResult);
             final List<WhereCondition> whereConditions = getOnlyNonJoinConditions(parseResult.whereConditions);
-            selectedData = tableData.select(parseResult.selectedColumns, whereConditions, parseResult.orderConditions);
+            resolveColmnNamesIfNeeded(selectedColumns); 
+            selectedData = tableData.select(selectedColumns, whereConditions, parseResult.orderConditions);
         }
 
-        final SelectionTable toReturn = new SelectionTable((Table)tableData, parseResult.selectedColumns);
+        final SelectionTable toReturn = new SelectionTable((Table)tableData, selectedColumns);
         toReturn.setDataRows(selectedData);
         return toReturn;
+	}
+
+	private void resolveColmnNamesIfNeeded(final List<String> selectedColumns) throws SQLDataException 
+	{
+		List<String> resolvedSelectedColumns = new ArrayList<String>();
+		
+		if (selectedColumns != null && selectedColumns.size() == 1 ) 
+		{
+			String baseTableName = selectedColumns.get(0);
+			if (baseTableName.endsWith("." + SQLKeyWords.ALL_COLUMNS)) {
+				baseTableName = baseTableName.substring(0, baseTableName.length() - 2);
+				List<String> namesOfColumns = memoryDb.getTableStoreData().getTableData(baseTableName).getNamesOfColumns();
+				for (String columnName : namesOfColumns) {
+					resolvedSelectedColumns.add(baseTableName + "." + columnName);
+				}
+				selectedColumns.clear();
+				selectedColumns.addAll(resolvedSelectedColumns);
+			}
+		}
 	}
 	
 	private SelectionTable buildSelectionTableForMysqlNextId(final String mysqlNextIdTable) throws SQLDataException 
@@ -240,7 +256,15 @@ public class SqlExecutor
 		final JoinTable joinTable = new JoinTable(memoryDb, parseResult.tableNames.get(0));
 		final List<WhereCondition> joinConditions = getOnlyJoinConditions(parseResult.whereConditions);
 		applyJoinConditions(joinTable, joinConditions);
-		return joinTable;
+		return new JoinTable(joinTable, buildJoinTableName(parseResult.tableNames));
+	}
+
+	private String buildJoinTableName(List<String> tableNames) {
+		String toReturn = "";
+		for (String tn : tableNames) {
+			toReturn += tn + " ";
+		}
+		return toReturn.trim().replace(' ', '_');
 	}
 
 	private void applyJoinConditions(final JoinTable joinTable, 

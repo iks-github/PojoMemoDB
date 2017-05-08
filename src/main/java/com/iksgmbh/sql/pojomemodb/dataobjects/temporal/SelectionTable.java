@@ -28,9 +28,13 @@ import java.util.List;
 public class SelectionTable extends Table
 {
 	public SelectionTable(final Table parentTable,
-                          final List<String> sortedColumnNames) throws SQLDataException
+                          List<String> sortedColumnNames) throws SQLDataException
 	{
 		super(parentTable.getTableName());
+		
+		if (sortedColumnNames == null) {
+			sortedColumnNames = parentTable.getNamesOfColumns();
+		}
 
         if ( ! parentTable.getTableName().equals(SQLKeyWords.DUAL) ) {
             for (String columnName : sortedColumnNames) {

@@ -90,11 +90,11 @@ public class SelectParser extends SqlPojoMemoParser
 		}
 
 		parseResult = parseNextValueByLastOccurrence(parseResult.unparsedRest, FROM);
-		final List<String> selectedColumns = parseColumnList(parseResult.parsedValue);
+		List<String> selectedColumns = parseColumnList(parseResult.parsedValue);
 		
 		final List<TableId> selectedTables;
 		
-		if (sql.contains(JOIN))  
+		if (sql.toUpperCase().contains(JOIN))  
 		{
 			selectedTables = parseAnsiJoinStatement(parseResult.unparsedRest, whereConditions);
 		} 
@@ -105,12 +105,13 @@ public class SelectParser extends SqlPojoMemoParser
 		
 		if (selectedTables.size() == 1) {
 			// simple select on only one table
-			removeTableIdFromColumnNamesIfPresent(selectedTables.get(0), selectedColumns); 
+			selectedColumns = removeTableIdFromColumnNamesIfPresentForSingleTable(selectedTables.get(0), selectedColumns); 
 		} else {
-			replaceAliasInWhereConditions(whereConditions, selectedTables);
 			replaceAliasInSelectClause(selectedColumns, selectedTables);
 			replaceAliasInOrderConditions(orderConditions, selectedTables);
 		}
+		
+		replaceAliasInWhereConditions(whereConditions, selectedTables);
 
 		ParsedSelectData toReturn = new ParsedSelectData(buildTableNameList(selectedTables), selectedColumns,
 				                                         whereConditions, orderConditions);
@@ -215,10 +216,11 @@ public class SelectParser extends SqlPojoMemoParser
 			int i = -1;
 			for (String columnName : selectedColumns) 
 			{
+				columnName = columnName.toUpperCase();
 				i++;
 				for (TableId tableId : selectedTables) 
 				{
-					final String firstPartOfColumnId = tableId.getAlias() + ".";
+					final String firstPartOfColumnId = tableId.getAlias().toUpperCase() + ".";
 					if (columnName.startsWith(firstPartOfColumnId)) {
 						selectedColumns.set(i, columnName.replace(firstPartOfColumnId, tableId.getTableName() + "."));
 					}
@@ -281,8 +283,21 @@ public class SelectParser extends SqlPojoMemoParser
 			return null;
 		
 		String toReturn = valueAsString;
-		for (TableId tableId : tableIdList) {
-			toReturn = toReturn.replace(tableId.getAlias() + ".", tableId.getTableName() + ".");
+		for (TableId tableId : tableIdList) 
+		{
+			if (tableId.getAlias() != null) 
+			{
+				// try all variants
+				if (toReturn.startsWith(tableId.getAlias() + ".")) {					
+					toReturn = toReturn.replace(tableId.getAlias() + ".", tableId.getTableName().toUpperCase() + ".");
+				}
+				if (toReturn.startsWith(tableId.getAlias().toUpperCase() + ".")) {
+					toReturn = toReturn.replace(tableId.getAlias().toUpperCase() + ".", tableId.getTableName().toUpperCase() + ".");
+				}
+				if (toReturn.startsWith(tableId.getAlias().toLowerCase() + ".")) {					
+					toReturn = toReturn.replace(tableId.getAlias().toLowerCase() + ".", tableId.getTableName().toUpperCase() + ".");
+				}
+			}
 		}
 		return toReturn;
 	}
@@ -307,17 +322,26 @@ public class SelectParser extends SqlPojoMemoParser
 		return toReturn;
 	}
 
-	private void removeTableIdFromColumnNamesIfPresent(final TableId tableId, 
-			                                           final List<String> selectedColumns) throws SQLDataException 
+	private List<String> removeTableIdFromColumnNamesIfPresentForSingleTable(final TableId tableId, 
+			                                                                 final List<String> selectedColumns) throws SQLDataException 
 	{
-		if (selectedColumns == null) return;
+		if (selectedColumns == null) return null;
+		
+		if (selectedColumns.size() == 1 && selectedColumns.get(0).contains(ALL_COLUMNS)) {
+			InterimParseResult parseResult = parseNextValue(selectedColumns.get(0), ".");
+			if (parseResult.parsedValue.equalsIgnoreCase(tableId.getAlias())
+				|| parseResult.parsedValue.equalsIgnoreCase(tableId.getTableName())) {
+				return null;
+			}
+			throw new SQLDataException("Column information: <" + selectedColumns.get(0) + "> is not parseable!");
+		}
 		
 		for (int i = 0; i < selectedColumns.size(); i++) 
 		{
 			final String oldColumnName = selectedColumns.get(i);
 			final String alias = tableId.getAlias();
 			
-			if (alias != null && oldColumnName.startsWith(alias + ".")) {
+			if (alias != null && oldColumnName.startsWith(alias +  ".")) {
 				// remove alias
 				String newColumnName = oldColumnName.substring(alias.length() + 1);
 				selectedColumns.set(i, newColumnName);
@@ -330,6 +354,8 @@ public class SelectParser extends SqlPojoMemoParser
 				throw new SQLDataException("Column name <" + oldColumnName + "> misses table alias.");
 			}
 		}
+		
+		return selectedColumns;
 	}
 
 	private List<String> parseColumnList(final String columnNameData) 
@@ -339,6 +365,12 @@ public class SelectParser extends SqlPojoMemoParser
 		} 
 		
 		final List<String> toReturn = new ArrayList<String>();
+		
+		if (columnNameData.contains(ALL_COLUMNS)) {
+			toReturn.add(columnNameData);
+			return toReturn;
+		}
+		
 		InterimParseResult parseResult = parseNextValue(columnNameData, OPENING_PARENTHESIS.charAt(0), CLOSING_PARENTHESIS.charAt(0), COMMA.charAt(0));
 		toReturn.add(parseResult.parsedValue);
 		
